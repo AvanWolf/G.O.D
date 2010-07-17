@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modG.O.DCore                 "0xDCBA0500">
+]>
+
+<TranscendenceExtension UNID="&modG.O.DCore;" version="1.0">
+
+    <Globals>
+        (block Nil
+
+            ;;; This is the Core Screen that displays the base actions
+            ;;; It is called from any point that initiates a god screen
+            (setq god_CoreScreen (lambda nil (block nil
+                (dsf_ResetScreenStore 'CustomFilterScreen)
+                (dsf_SetScreenState 'CustomFilterData (god_FormatModules))
+                (dsf_SetScreenState 'CustomFilterOverride (list
+                    'screenName "Galactic Omni Device"
+                    'actions (list
+                        (list
+                            'name       '("Select" 'S)
+                            'runFunc    '(block (action)
+                                (setq action (dsf_GetListEntryData 'action))
+                                (dsf_DoFunc action)
+                            )
+                        )
+                    )
+                ))
+                (dsf_CustomFilterScreen)
+            )))
+
+            ;;; This is the function that gathers all the G.O.D modules
+            ;;; It is used inside the Core Screen
+            (setq god_FormatModules (lambda nil
+                (block ((customList (list)))
+                    ;; check if we already have the formatted list
+                    (if (not (setq customList god_PreFormatedModules))
+                        ;; sort the list once by weight, then once by title
+                        (setq customList (dsf_ListSort god_Modules a b (ls (dsf_HashGet a 'weight) (dsf_HashGet b 'weight))))
+                        (setq customList (dsf_ListSort god_Modules a b (ls (dsf_HashGet a 'title) (dsf_HashGet b 'title))))
+                        (setq god_PreFormatedModules customList)
+                    )
+                    customList
+                )
+            ))
+
+            ;;; This is a global variable that holds all the elements
+            (setq god_Modules (list))
+
+            ;;; This global variable is used to store the formatted list
+            ;;; so that we don't have to recreate it on every run
+            ;;; This allows us to make the building of the list more expensive
+            ;;; We don't save this on the ship so we can catch changes to the
+            ;;; modules made between sessions
+            (setq god_PreFormatedModules nil)
+        )
+    </Globals>
+
+</TranscendenceExtension>
+<!--
+vim:enc=utf-8:nu:ai:si:et:ts=4:sw=4:ft=tscript:
+-->
