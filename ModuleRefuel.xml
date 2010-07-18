@@ -14,12 +14,12 @@
                     'weight     0
                     'title      "Refuel"
                     'subtitle   "Refuel any reactor known to me. Any reactor that is not refueled, contact me"
-                    'action     '(block nil
+                    'action     (lambda nil (block nil
                         ;; pump it full of Longzhu's
                         (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
                         (dsf_SetPaneDesc "Your Reactor has been refueled\n\n")
-                        nli
-                    )
+                        nil
+                    ))
                 )
             ))
 
