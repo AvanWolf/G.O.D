@@ -1,0 +1,217 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleItemBrowse      "0xDCBA0507">
+]>
+
+<TranscendenceExtension UNID="&modGODModuleItemBrowse;" version="1.0">
+
+    <Globals>
+        (block (thisModule addCriteria removeCriteria ItemBrowserScreen RestoreGear)
+
+            ;; * TODO Make sure "*U" and "*V" get the right items
+            ;;   perhaps we should ignore virtual items
+            (setq addCriteria "*V")
+            (setq removeCriteria "*U")
+
+            (setq RestoreGear (lambda nil
+                (block nil
+                    ;; remove all items we have been browsing
+                    (objEnumItems gPlayerShip removeCriteria itm
+                        (objRemoveItem gPlayerShip itm)
+                    )
+                    ;; restore original inventory
+                    (enum (dsf_RemoveData 'god_SavedGear) itm
+                        (objAddItem gPlayerShip itm)
+                    )
+                    (dsf_RemoveScreenState 'god_ItemIdentify)
+                    ;; turn messages on again
+                    (plyRedirectMessage gPlayer Nil)
+                )
+            ))
+
+            ;;; store all of the current gear as a var on the playership
+            ;;; when we enter the screen, if this var is already set
+            ;;; as if we should redirect to a recovery screen that
+            ;;; restores all the previous gear, or if we should
+            ;;; continue and just show all gear (not undoable)
+            
+            ;;; add an action "Restore Gear and Back" that recreates the players
+            ;;; original inventory. This leaves three ways to survive.
+            ;;; 1. Exit directly from the browser ("Exit Cleanly")
+            ;;; 2. "Restore Gear and Back"
+            ;;; 3. Enter Browser again, with var set on playership and answer
+            ;;;    yes to the question asked.
+
+            ;;; * NOTE It is important that this function does not mess with installed
+            ;;;   items... If this screen leads to items being installed/added, they must
+            ;;;   be added to a list of items not to be touched.
+            ;;;
+            ;;;   I am not sure if items that are installed conflict with items
+            ;;;   that will be shown... perhaps they will interact somehow...
+            (setq ItemBrowserScreen (lambda nil
+                (block (screen gear identify)
+                    ;; since many items spam messages, hide them all
+                    (plyRedirectMessage gPlayer true)
+
+                    (if (and (dsf_GetData 'god_SavedGear) (not (dsf_GetScreenState 'god_NoRestoreGear)))
+                        (block nil
+                            (dbgLog "Restore gear")
+                            (dsf_SelectScreen 'Standard)
+                            (dsf_SetState 'Name "Restore Items?")
+                            (dsf_SetState 'Desc "We have registered you have items for recovery stored.\n\nDo you want to recover your items?")
+                            (dsf_SetState 'Actions (list
+                                (list
+                                    'name       '("Yes" 'Y)
+                                    'runFunc    (lambda nil (block nil
+                                        (RestoreGear)
+                                        (dsf_BuildPaneDesc '("Restored gear\n\n" '+))
+                                        (god_CoreScreen)
+                                    ))
+                                )
+                                (list
+                                    'name       '("No" 'N)
+                                    'runFunc    (lambda nil (block nil
+                                        (dsf_SetScreenState 'god_NoGearRestore true)
+                                        (ItemBrowserScreen)
+                                    ))
+                                )
+                            ))
+                            (dsf_SetOverride (list
+                                'hideExit true
+                                'hideBack true
+                            ))
+                            (setq screen (dsf_GetScreen))
+                        )
+                        (block Nil
+                            (if (not (dsf_GetData 'god_SavedGear)) (block nil
+                                (setq gear (dsf_SetData 'god_SavedGear (objGetItems gPlayerShip removeCriteria)))
+                                ;; at this point, we have saved players old gear and are
+                                ;; ready to remove it and replace it with everything
+                                (enum gear g (objRemoveItem gPlayerShip g))
+                                (enum (itmGetTypes addCriteria) itm (objAddItem gPlayerShip (itmCreate itm 1)))
+                            ))
+                            (setq identify (dsf_GetScreenState 'god_ItemIdentify))
+                            (if identify
+                                (objEnumItems gPlayerShip removeCriteria itm (block nil
+                                    (itmSetReference itm)
+                                    (itmSetKnown itm)
+                                ))
+                            )
+                             
+                            (dsf_SelectScreen 'ItemPicker)
+                            ;; we never want to see installed items
+                            (dsf_SetState 'HiddenCriteria "U")
+                            ;; set up the screen override
+                            (dsf_SetOverride (list
+                                'screenName     (if identify "Item Browser (Identified)" "Item Browser (Unidentified)")
+                                'actions        (list
+                                    (list
+                                        'name       '("Add to Cargo Hold" 'A)
+                                        'runFunc    (lambda Nil (block Nil
+                                            (if (dsf_RemoveScreenState 'god_PaneToggle)
+                                                (block (cnt itm flag)
+                                                    (setq cnt (scrGetCounter gScreen))
+                                                    (setq itm (scrGetItem gScreen))
+                                                    ;; instead of adding item to ship, we add it to the saved screen state
+                                                    (dsf_SetData 'god_SavedGear (append
+                                                        (dsf_GetData 'god_SavedGear (list))
+                                                        (list (itmCreate (itmGetUNID itm) cnt))
+                                                    ))
+                                                    (scrShowPane gScreen "Default")
+                                                    (scrSetActionLabel gScreen 0 "Add to Cargo Hold" 'A)
+                                                    ;; pluralize item name
+                                                    (if (eq cnt 1) (setq flag 1) (setq flag 3))
+                                                    (dsf_SetPaneDesc (cat "Added " cnt " \"" (itmGetName itm flag) "\" to your cargo hold."))
+                                                    Nil
+                                                )
+                                                (block Nil
+                                                    (scrShowPane gScreen "Counter")
+                                                    (scrSetActionLabel gScreen 0 "Complete Action" 'C)
+                                                    (scrSetCounter gScreen 1)
+                                                    (dsf_SetScreenState 'god_PaneToggle True)
+                                                    (dsf_SetPaneDesc (cat "Select the amount of \""
+                                                        (itmGetName (scrGetItem gScreen) 3)
+                                                         "\" you want to add to your cargo hold.\n"
+                                                         "To abort just add 0."))
+                                                    Nil
+                                                )
+                                            )
+                                        ))
+                                    )
+                                    (list
+                                        'name           '("Install (Force)" 'I)
+                                        'noSave         True
+                                        'disableFunc    '(itmMatches (scrGetItem gScreen) "fmtu")
+                                        'runFunc        (lambda Nil (block (itm result)
+                                            (setq itm (scrGetItem gScreen))
+                                            (dsf_SetState 'Initial itm)
+                                            (setq result (god_InstallItem itm))
+                                            (dsf_BuildPaneDesc  (list (cat (item result 1) "\n\n") '+))
+                                            (dsf_GetScreen)
+                                        ))
+                                    )
+                                    (list
+                                        ;; add a back function that does not restore
+                                        ;; this will make it easier to browse items
+                                        ;; it will require that we set a state variable
+                                        ;; so we recignize we should not switch to the
+                                        ;; restore gear screeen on enter
+                                        'name       '("Return" 'R)
+                                        'runFunc    (lambda nil (block nil
+                                            (dsf_SetScreenState 'god_NoGearRestore true)
+                                            ;; turn messages on again
+                                            (plyRedirectMessage gPlayer Nil)
+                                            (dsf_RemoveScreenState 'god_ItemIdentify)
+                                            (dsf_ForceBackAction)
+                                        ))
+                                    )
+                                )
+                                'initFunc       '(block nil
+                                    (scrSetActionLabel gScreen 8 "Back and Restore Gear" 'B)
+                                    (scrSetActionLabel gScreen 9 "Exit and Restore Gear" 'X)
+                                )
+                                'exitFunc       (lambda nil (RestoreGear))
+                                'backFunc       (lambda nil (RestoreGear))
+                            ))
+                            (setq screen (dsf_GetScreen))
+                        )
+                    )
+                    screen
+                )
+            ))
+
+
+            ;; define this modules actions
+            (setq thisModule (list
+                (list
+                    'weight     1
+                    'title      "Browse Items (Identified)"
+                    'subtitle   "*** WARNING: ALL ITEMS WILL BE IDENTIFIED ***\nBrowse and search all items in game. Add some to your cargo hold, or install them directly."
+                    'action     (lambda nil (block nil
+                        (dsf_SetScreenState 'god_ItemIdentify true)
+                        (ItemBrowserScreen)
+                     ))
+                )
+                (list
+                    'weight     1
+                    'title      "Browse Items (Unidentified)"
+                    'subtitle   "Browse and search all items in game. Add some to your cargo hold, or install them directly."
+                    'action     (lambda nil (block nil
+                        (dsf_SetScreenState 'god_ItemIdentify nil)
+                        (ItemBrowserScreen)
+                     ))
+                )
+            ))
+
+            (setq god_Modules (if god_Modules
+                (append god_Modules thisModule)
+                thisModule
+            ))
+        )
+    </Globals>
+  
+</TranscendenceExtension>
+<!--
+vim:enc=utf-8:nu:ai:si:et:ts=4:sw=4:ft=tscript:
+-->
