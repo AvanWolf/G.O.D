@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODCoreHook             "0xDCBA0501">
+    <!ENTITY itGODCoreHook              "0xDCBA0502">
+]>
+
+<TranscendenceExtension UNID="&modGODCoreHook;" version="1.0">
+
+    <ItemType UNID="&itGODCoreHook;"
+        name=           "G.O.D"
+        modifiers=      "ScreenHook; TerminalService;"
+        virtual=        "true"
+        usekey=         "G"
+        >
+        <Image imageID="&rsItems1;" imageX="0" imageY="192" imageWidth="96" imageHeight="96"/>
+        <Invoke>
+            (block Nil
+                (dsf_ShowDockScreen (god_CoreScreen))
+            )
+        </Invoke>
+        <StaticData>
+            <HookTitle>"G.O.D"</HookTitle>
+            <ScreenData>'(god_CoreScreen)</ScreenData>
+        </StaticData>
+    </ItemType>
+
+</TranscendenceExtension>
+<!--
+vim:enc=utf-8:nu:ai:si:et:ts=4:sw=4:ft=tscript:
+-->

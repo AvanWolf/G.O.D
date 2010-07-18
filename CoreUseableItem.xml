@@ -1,29 +1,15 @@
 <?xml version="1.0" ?>
 <!DOCTYPE TranscendenceExtension
 [
-    <!ENTITY modGODCoreUseableItem      "0xDCBA0501">
-    <!ENTITY itGODCoreUseableItem       "0xDCBA0502">
-    <!ENTITY stGODCorePlaceItem         "0xDCBA0503">
+    <!ENTITY modGODCoreUseableHook      "0xDCBA0503">
+    <!ENTITY stGODCorePlaceHook         "0xDCBA0504">
 
-    <!ENTITY dsDSFCustomPicker          "0xDCBA0064">
+    <!ENTITY itGODCoreHook              "0xDCBA0502">
 ]>
 
-<TranscendenceExtension UNID="&modGODCoreUseableItem;" version="1.0">
+<TranscendenceExtension UNID="&modGODCoreUseableHook;" version="1.0">
 
-    <ItemType UNID="&itGODCoreUseableItem;"
-        name=           "G.O.D"
-        virtual=        "true"
-        usekey=         "G"
-        >
-        <Image imageID="&rsItems1;" imageX="0" imageY="192" imageWidth="96" imageHeight="96"/>
-        <Invoke>
-            (block Nil
-                (dsf_ShowDockScreen (god_CoreScreen))
-            )
-        </Invoke>
-    </ItemType>
-
-    <StationType UNID="&stGODCorePlaceItem;"
+    <StationType UNID="&stGODCorePlaceHook;"
         backgroundObject=       "true"
         unique=                 "inSystem"
         virtual=                "true"
@@ -32,8 +18,8 @@
         <Events>
           <OnGlobalPlayerEnteredSystem>
             (block Nil
-                (if (not (objHasItem gPlayerShip (itmCreate &itGODCoreUseableItem; 1)))
-                    (objAddItem gPlayerShip (itmCreate &itGODCoreUseableItem; 1))
+                (if (not (objHasItem gPlayerShip (itmCreate &itGODCoreHook; 1)))
+                    (objAddItem gPlayerShip (itmCreate &itGODCoreHook; 1))
                 )
             )
           </OnGlobalPlayerEnteredSystem>
