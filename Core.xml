@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE TranscendenceExtension
 [
-    <!ENTITY modG.O.DCore                 "0xDCBA0500">
+    <!ENTITY modGODCore                 "0xDCBA0500">
 ]>
 
-<TranscendenceExtension UNID="&modG.O.DCore;" version="1.0">
+<TranscendenceExtension UNID="&modGODCore;" version="1.0">
 
     <Globals>
         (block Nil
@@ -12,21 +12,31 @@
             ;;; This is the Core Screen that displays the base actions
             ;;; It is called from any point that initiates a god screen
             (setq god_CoreScreen (lambda nil (block nil
-                (dsf_ResetScreenStore 'CustomFilterScreen)
-                (dsf_SetScreenState 'CustomFilterData (god_FormatModules))
-                (dsf_SetScreenState 'CustomFilterOverride (list
-                    'screenName "Galactic Omni Device"
-                    'actions (list
-                        (list
-                            'name       '("Select" 'S)
-                            'runFunc    '(block (action)
-                                (setq action (dsf_GetListEntryData 'action))
-                                (dsf_DoFunc action)
-                            )
+                (dsf_SelectScreen 'CustomPicker)
+                (dsf_SetState 'Data (god_FormatModules))
+                (dsf_SetState 'Name "Galactic Omni Device")
+                (dsf_SetState 'Actions (list
+                    (list
+                        'name       '("Select" 'S)
+                        'runFunc    '(block (action)
+                            (setq action (dsf_GetListEntryData 'action))
+                            (dsf_DoFunc action)
                         )
                     )
                 ))
-                (dsf_CustomFilterScreen)
+                ;(dsf_SetOverride (list
+                ;    'screenName "Galactic Omni Device"
+                ;    'actions (list
+                ;        (list
+                ;            'name       '("Select" 'S)
+                ;            'runFunc    '(block (action)
+                ;                (setq action (dsf_GetListEntryData 'action))
+                ;                (dsf_DoFunc action)
+                ;            )
+                ;        )
+                ;    )
+                ;))
+                (dsf_GetScreen)
             )))
 
             ;;; This is the function that gathers all the G.O.D modules
