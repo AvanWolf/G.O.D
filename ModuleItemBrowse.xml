@@ -101,7 +101,7 @@
                              
                             (dsf_SelectScreen 'ItemPicker)
                             ;; we never want to see installed items
-                            (dsf_SetState 'HiddenCriteria "U")
+                            (dsf_SetState 'BaseCriteria "U")
                             ;; set up the screen override
                             (dsf_SetOverride (list
                                 'screenName     (if identify "Item Browser (Identified)" "Item Browser (Unidentified)")
@@ -127,7 +127,7 @@
                                                 )
                                                 (block Nil
                                                     (scrShowPane gScreen "Counter")
-                                                    (scrSetActionLabel gScreen 0 "Complete Action" 'C)
+                                                    (scrSetActionLabel gScreen 0 "Confirm" 'C)
                                                     (scrSetCounter gScreen 1)
                                                     (dsf_SetScreenState 'god_PaneToggle True)
                                                     (dsf_SetPaneDesc (cat "Select the amount of \""
@@ -202,12 +202,156 @@
                         (ItemBrowserScreen)
                      ))
                 )
+                (list
+                    'weight     2
+                    'title      "Create Item"
+                    'subtitle   "Create Items by inputing their name or UNID"
+                    'action     (quote (SpawnItem))
+                )
             ))
 
             (setq god_Modules (if god_Modules
                 (append god_Modules thisModule)
                 thisModule
             ))
+
+
+            (setq SpawnItem (lambda nil
+                (block nil
+                    (dsf_SelectScreen 'CustomPicker)
+                    (dsf_SetState 'Actions (list
+                        (list
+                            'name       '("Enter Name or UNID")
+                        )
+                    ))
+                    (dsf_GetScreen)
+                )
+            ))
+
+
+
+;                    (eq screen 'SpawnItemByNameOrUNID)
+;                        (list
+;                            'screenName         "Spawn Item by Name or UNID"
+;                            'screenType         "CustomPicker"
+;                            'preInitFunc        '(dsf_RemoveScreenState 'GOD_PaneToggle)
+;                            'paneDesc           "Enter name or UNID (prefixed with 0x) of item you want to spawn."
+;                            'actions            (list
+;                                (list
+;                                    'name           '("Enter Name or UNID" 'E)
+;                                    'noSave         True
+;                                    'runFunc        (lambda Nil (block (input type)
+;                                        (if (dsf_GetScreenState 'GOD_PaneToggle)
+;                                            (block Nil
+;                                                (setq input (scrGetInputText gScreen))
+;                                                (if (eq (strFind input "0x") 0)
+;                                                    ;; input was a unid... convert it
+;                                                    (block Nil
+;                                                        (setq type (int input))
+;                                                        ;; double check the type exists
+;                                                        (if (not (find (typFind "i") type))
+;                                                            (setq type Nil)
+;                                                        )
+;                                                    )
+;                                                    ;; input is a name... see if we can convert it
+;                                                    (block Nil
+;                                                        (setq type (unvUNID input))
+;                                                        (if (eq (item type 1) 'itemtype)
+;                                                            (setq type (item type 0))
+;                                                            (setq type Nil)
+;                                                        )
+;                                                    )
+;                                                )
+;                                                ;; if we don't have a type here, inform the player
+;                                                (if (not type)
+;                                                    (block Nil
+;                                                        (dsf_SetPaneDesc "No item found matching input text. Please try again")
+;                                                        Nil
+;                                                    )
+;                                                    ;; else add it to custompicker list
+;                                                    (block (data)
+;                                                        (dsf_RemoveScreenState 'GOD_PaneToggle)
+;                                                        (setq data (dsf_GetScreenState 'GOD_ItemSpawnState (list)))
+;                                                        (dsf_SetScreenState 'GOD_ItemSpawnState (append data type))
+;                                                        (dsf_BuildPaneDesc (list (cat "Added \"" (typGetDataField type 'name) "\" to list.\n\n") '+))
+;                                                        ;; return to this screen
+;                                                        (god_Screen 'SpawnItemByNameOrUNID)
+;                                                    )
+;                                                )
+;                                            )
+;                                            (block Nil
+;                                                (scrShowPane gScreen "TextInput")
+;                                                (dsf_SetScreenState 'GOD_PaneToggle True)
+;                                                Nil
+;                                            )
+;                                        )
+;                                    ))
+;                                )
+;                                (list
+;                                    'name           '("Add to Cargo Hold" 'A)
+;                                    'noSave         True
+;                                    'disableFunc    '(not (dsf_GetListEntryData 'type))
+;                                    'runFunc        (lambda Nil (block Nil
+;                                        (if (dsf_RemoveScreenState 'GOD_PaneToggle)
+;                                            (block (cnt type itm flag)
+;                                                (setq cnt (scrGetCounter gScreen))
+;                                                (setq type (dsf_GetListEntryData 'type))
+;                                                (objAddItem gPlayerShip (setq itm (itmCreate type cnt)))
+;                                                (scrShowPane gScreen "Default")
+;                                                (scrSetActionLabel gScreen 1 "Add to Cargo Hold" 'A)
+;                                                ;; pluralize item name
+;                                                (if (eq cnt 1) (setq flag 1) (setq flag 3))
+;                                                (dsf_SetPaneDesc (cat "Added " cnt " \"" (itmGetName itm flag) "\" to your cargo hold."))
+;                                                Nil
+;                                            )
+;                                            (block Nil
+;                                                (scrShowPane gScreen "Counter")
+;                                                (scrSetActionLabel gScreen 1 "Complete Action" 'C)
+;                                                (scrSetCounter gScreen 1)
+;                                                (dsf_SetScreenState 'GOD_PaneToggle True)
+;                                                (dsf_SetPaneDesc (cat "Select the amount of \"" (itmGetName (itmCreate (dsf_GetListEntryData 'type) 1) 3) "\" you want to add to your cargo hold."))
+;                                                Nil
+;                                            )
+;                                        )
+;                                    ))
+;                                )
+;                                (list
+;                                    'name           '("Install (Force)" 'I)
+;                                    'noSave         True
+;                                    'disableFunc    '(not (dsf_GetListEntryData 'type))
+;                                    'runFunc        (lambda Nil (block (result)
+;                                        (setq result (god_InstallItem (itmCreate (dsf_GetListEntryData 'type) 1)))
+;                                        (dsf_SetPaneDesc (item result 1))
+;                                        Nil
+;                                    ))
+;                                )
+;                                (list
+;                                    'name           '("Identify" 'Y)
+;                                    'noSave         True
+;                                    'disableFunc    '(not (dsf_GetListEntryData 'type))
+;                                    'runFunc        (lambda Nil (block (type)
+;                                        (setq type (dsf_GetListEntryData 'type))
+;                                        (itmSetKnown type)
+;                                        (dsf_BuildPaneDesc (list (cat "Identified item.\n\n") '+))
+;                                        (god_Screen 'SpawnItemByNameOrUNID)
+;                                    ))
+;                                )
+;                            )
+;                            'backFunc           '(dsf_RemoveScreenState 'GOD_ItemSpawnState)
+;                            'customPicker       (block (data)
+;                                (setq data (dsf_GetScreenState 'GOD_ItemSpawnState (list)))
+;                                (setq data (dsf_ListMap data type (list
+;                                    'title      (typGetDataField type 'name)
+;                                    'subtitle   (typGetDataField type 'description)
+;                                    'image      (itmGetImageDesc (itmCreate type 1))
+;                                    'type       type
+;                                )))
+;                                data
+;                            )
+;                        )
+
+
+                        
         )
     </Globals>
   
