@@ -1,10 +1,10 @@
--*- mode: org -*-
 
-* G.O.D (Galactic Omni Device)
+* G.O.D. (Galactic Omni Device)
 
   A modders tool
 
-  Built for the game [[http://neurohack.com/transcendence][Transcendence]] by George Moromisato
+  Built for the game Transcendence (http://neurohack.com/transcendence)
+  - by George Moromisato
 
 * UNIDs
 
@@ -12,12 +12,6 @@
   |------------------+-------------------------|
   | Reserved Space   | 0xDCBA0500 - 0xDCBA0599 |
   |------------------+-------------------------|
-  | Core             |              0xDCBA0500 |
-  | CoreHook         | 0xDCBA0501 - 0xDCBA0503 |
-  | CoreUseableHook  | 0xDCBA0503 - 0xDCBA0504 |
-  | CoreFunctions    |              0xDCBA0505 |
-  | ModuleRefuel     |              0xDCBA0506 |
-  | ModuleItemBrowse |              0xDCBA0507 |
+  | Core             | 0xDCBA0500 - 0xDCBA0502 |
+  | ModuleRestore    |              0xDCBA0510 |
 
-
-                        

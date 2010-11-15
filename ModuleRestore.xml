@@ -10,13 +10,18 @@
   credits="alterecco"
   version="1.0">
 
+<!--
+;   License:
+;     Public Domain - alterecco@gmail.com - 2010
+-->
+
   <Globals>
     (block (module)
 
     (setq module (list
       '( (weight     0)
          (title      "Refuel")
-         (subtitle   "Refuel any reactor known to me.\nAny reactor that is not fully refueled, contact me")
+         (subtitle   "Refuel your reactor.\nIf it is not fully refueled, contact me")
          (action     (block nil
            ;; pump it full of Longzhu's
            (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
