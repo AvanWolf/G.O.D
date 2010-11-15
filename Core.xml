@@ -10,33 +10,42 @@
 
 <TranscendenceExtension
   UNID="&modGODCore;"
-  name="GOD Core"
+  name="G.O.D. Core"
   credits="alterecco"
   version="1.0">
 
   <Globals>
-    (block Nil
+    (block nil
 
     (setq god/core-screen (lambda nil (block nil
-      (dsf/new-screen 'god-core 'custompicker "Galactic Omni Device")
+      (dsf/new-screen 'god-core 'custompicker "G.O.D.")
       (dsf/add-list-data (god/format-modules))
+      (dsf/new-action 'select "Select" 'S (lambda nil
+        (block (action)
+          (setq action (dsf/list-entry 'action))
+          (dsf/eval action)
+        )
+      ))
+      (dsf/default-action 'select)
       (dsf/show-screen)
     )))
 
-
     ;; gather all the G.O.D modules into one custompicker list
-    (setq god/format-modules (lambda nil (block (custompicker (list))
-      (if (not (setq custompicker god/formatted-modules))
+    (setq god/format-modules (lambda nil (block (modules (list))
+      (if (not (setq modules god/formatted-modules)) (block nil
         ;; sort list once by weight, then by title
-        (setq custompicker (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
-        (setq custompicker (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
-        (setq god/formatted-modules custompicker)
-      )
-      custompicker
+        (setq modules (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
+        (setq modules (dsf/list-sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
+        (setq god/formatted-modules modules)
+      ))
+      modules
     )))
 
     ;;; This is a global variable that holds all the modules
-    (setq god/modules (list))
+    (setq god/modules (if (isError god/modules)
+      (list)
+      god/modules
+    ))
 
     ;;; This global variable is used to store the formatted list of modules
     ;;; so that we don't have to recreate it on every run.
@@ -49,8 +58,7 @@
   </Globals>
 
   <ItemType UNID="&itGODCoreHook;"
-    name=           "G.O.D"
-    modifiers=      "ScreenHook; TerminalService;"
+    name=           "G.O.D."
     virtual=        "true"
     usekey=         "G"
     >
