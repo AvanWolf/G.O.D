@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleRestore      "0xDCBA0510">
+]>
+
+<TranscendenceExtension
+  UNID="&modGODModuleRestore;"
+  name="G.O.D. Module - Restore"
+  credits="alterecco"
+  version="1.0">
+
+  <Globals>
+    (block (module)
+
+    (setq module (list
+      '( (weight     0)
+         (title      "Refuel")
+         (subtitle   "Refuel any reactor known to me.\nAny reactor that is not fully refueled, contact me")
+         (action     (block nil
+           ;; pump it full of Longzhu's
+           (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
+           (dsf/pane-description "Your Reactor has been refueled")
+         )))
+    ))
+
+    (setq god/modules (if (isError god/modules)
+      module
+      (append god/modules module)
+    ))
+
+    )
+  </Globals>
+
+</TranscendenceExtension>
+<!--
+vim:ts=2:sw=2:sts=2:ft=tscript:
+-->
