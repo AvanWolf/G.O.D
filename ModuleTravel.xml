@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleTravel      "0xDCBA0511">
+]>
+
+<TranscendenceExtension
+  UNID="&modGODModuleTravel;"
+  name="G.O.D. Module - Travel"
+  credits="alterecco"
+  version="1.0">
+
+<!--
+;   License:
+;     Public Domain - alterecco@gmail.com - 2010
+-->
+
+  <Globals>
+    (block (module)
+
+    (setq module (list
+      '( (weight     3)
+         (title      "Galaxy Travel")
+         (subtitle   "Travel to any place in the galaxy.")
+         (action     (god/travel-galaxy)))
+
+      '( (weight     3)
+         (title      "System Travel")
+         (subtitle   "Travel to somewhere in the current system")
+         (action     (god/travel-system)))
+    ))
+
+    ;; handle modules
+    (setq god/modules (if (isError god/modules)
+      module
+      (append god/modules module)
+    ))
+
+    (setq god/travel-galaxy (lambda nil
+      (block ((systems (sysGetNodes))
+              (current (sysGetNode))
+              (custompicker (list)))
+
+        (dsf/screen 'travel-galaxy "Travel Galaxy" 'custompicker)
+
+        ;; TODO: build a much more advanced system list (in correct order)
+        ;; sort by level
+        (setq systems (dsf/list-sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
+        ;; filter out endgame
+        (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
+
+        ;; build a custompicker list
+        (enum systems s (if (not (eq s current))
+          (lnkAppend custompicker (list
+            (list 'title (sysGetName s))
+            (list 'node s)
+          ))
+        ))
+        (dsf/add-list-data custompicker)
+
+        (dsf/action 'gate "Gate to System" 'G (lambda nil (block (node gate)
+          (setq node (dsf/list-entry 'node))
+          (setq gate (item (sysGetStargates node) 0))
+          (objGateTo gPlayerShip node gate &efStargateOut;)
+          (dsf/exit)
+        )))
+
+        (dsf/back-action)
+        (dsf/exit-action)
+        (dsf/show-screen)
+      )
+    ))
+
+    (setq god/travel-system (lambda nil
+      (block nil
+        (dsf/screen 'travel-system "Travel System" 'custompicker)
+        (dsf/back-action)
+        (dsf/show-screen)
+      )
+    ))
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; HELPERS
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    ;; edge cases:
+    ;;  - destination system has no gates
+    ;;  - current system has only one gate and it leads somewhere
+    ;;    we have already been
+    ;;  - all systems have been accounted for
+    (setq god/gate-list (lambda (systems current gate)
+      (block (all dest)
+        (setq all (sysGetNodes))
+        (setq dest (sysGetStargateDestinationNode current gate))
+
+        (switch
+          (eq all systems)
+            nil
+          (eq (count (sysGetStargates dest)) 0)
+            nil
+        )
+      )
+    ))
+
+    )
+  </Globals>
+
+</TranscendenceExtension>
+<!--
+vim:ts=2:sw=2:sts=2:ft=tscript:
+-->
