@@ -2,71 +2,158 @@
 <!DOCTYPE TranscendenceExtension
 [
     <!ENTITY modGODCore                 "0xDCBA0500">
+
+    <!ENTITY itGODCoreHook              "0xDCBA0501">
+    <!ENTITY stGODCoreStation           "0xDCBA0502">
+
 ]>
 
-<TranscendenceExtension UNID="&modGODCore;" version="1.0">
+<TranscendenceExtension
+  UNID="&modGODCore;"
+  name="GOD Core"
+  credits="alterecco"
+  version="1.0">
 
-    <Globals>
+  <Globals>
+    (block Nil
+
+    (setq god/core-screen (lambda nil (block nil
+      (dsf/new-screen 'god-core 'custompicker "Galactic Omni Device")
+      (dsf/add-list-data (god/format-modules))
+      (dsf/show-screen)
+    )))
+
+
+    ;; gather all the G.O.D modules into one custompicker list
+    (setq god/format-modules (lambda nil (block (custompicker (list))
+      (if (not (setq custompicker god/formatted-modules))
+        ;; sort list once by weight, then by title
+        (setq custompicker (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
+        (setq custompicker (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
+        (setq god/formatted-modules custompicker)
+      )
+      custompicker
+    )))
+
+    ;;; This is a global variable that holds all the modules
+    (setq god/modules (list))
+
+    ;;; This global variable is used to store the formatted list of modules
+    ;;; so that we don't have to recreate it on every run.
+    ;;; This allows us to make the building of the list more expensive
+    ;;; We don't save this on the ship so we can catch changes to the
+    ;;; modules made between sessions
+    (setq god/formatted-modules nil)
+
+    )
+  </Globals>
+
+  <ItemType UNID="&itGODCoreHook;"
+    name=           "G.O.D"
+    modifiers=      "ScreenHook; TerminalService;"
+    virtual=        "true"
+    usekey=         "G"
+    >
+    <Image imageID="&rsItems1;" imageX="0" imageY="192" imageWidth="96" imageHeight="96"/>
+    <Invoke>
+      (god/core-screen)
+    </Invoke>
+  </ItemType>
+
+  <StationType UNID="&stGODCoreStation;"
+    virtual="true"
+    >
+    <Events>
+      <OnGlobalPlayerEnteredSystem>
         (block Nil
-
-            ;;; This is the Core Screen that displays the base actions
-            ;;; It is called from any point that initiates a god screen
-            (setq god_CoreScreen (lambda nil (block nil
-                (dsf_SelectScreen 'CustomPicker)
-                (dsf_SetState 'Data (god_FormatModules))
-                (dsf_SetState 'Name "Galactic Omni Device")
-                (dsf_SetState 'Actions (list
-                    (list
-                        'name       '("Select" 'S)
-                        'runFunc    '(block (action)
-                            (setq action (dsf_GetListEntryData 'action))
-                            (dsf_DoFunc action)
-                        )
-                    )
-                ))
-                ;(dsf_SetOverride (list
-                ;    'screenName "Galactic Omni Device"
-                ;    'actions (list
-                ;        (list
-                ;            'name       '("Select" 'S)
-                ;            'runFunc    '(block (action)
-                ;                (setq action (dsf_GetListEntryData 'action))
-                ;                (dsf_DoFunc action)
-                ;            )
-                ;        )
-                ;    )
-                ;))
-                (dsf_GetScreen)
-            )))
-
-            ;;; This is the function that gathers all the G.O.D modules
-            ;;; It is used inside the Core Screen
-            (setq god_FormatModules (lambda nil
-                (block ((customList (list)))
-                    ;; check if we already have the formatted list
-                    (if (not (setq customList god_PreFormatedModules))
-                        ;; sort the list once by weight, then once by title
-                        (setq customList (dsf_ListSort god_Modules a b (ls (dsf_HashGet a 'weight) (dsf_HashGet b 'weight))))
-                        (setq customList (dsf_ListSort god_Modules a b (ls (dsf_HashGet a 'title) (dsf_HashGet b 'title))))
-                        (setq god_PreFormatedModules customList)
-                    )
-                    customList
-                )
-            ))
-
-            ;;; This is a global variable that holds all the elements
-            (setq god_Modules (list))
-
-            ;;; This global variable is used to store the formatted list
-            ;;; so that we don't have to recreate it on every run
-            ;;; This allows us to make the building of the list more expensive
-            ;;; We don't save this on the ship so we can catch changes to the
-            ;;; modules made between sessions
-            (setq god_PreFormatedModules nil)
+          (if (not (objHasItem gPlayerShip (itmCreate &itGODCoreHook; 1)))
+            (objAddItem gPlayerShip (itmCreate &itGODCoreHook; 1))
+          )
         )
-    </Globals>
+      </OnGlobalPlayerEnteredSystem>
+    </Events>
+  </StationType>
 
+
+  <Globals>
+    (block Nil
+
+    ;; returns True or a tuple with error code and error message
+    ;; we only fail on a few of the conditions, namely those
+    ;; that can not be fixed without user input
+    ;; In other words, we always install
+    (setq god/install-item (lambda (itm normal cargo target)
+      (block (canInstall result code)
+        ;; if we don't have a target, it is the player
+        (if (not target) (setq target gPlayerShip))
+
+        (setq canInstall (shpCanInstallDevice target itm))
+
+        (switch
+          (and (itmHasModifier itm "Military") (not (objGetItems gPlayerShip "*+MilitaryID")))
+            (setq result '(1 "You must have a military ID to install this item."))
+          (eq canInstall 2)
+            (setq result '(2 "Your ship cannot support any more devices."))
+          (and (itmHasModifier itm "Illegal") (not (objGetItems gPlayerShip "*+BlackMarketID")))
+            (setq result '(3 "You must have a black market ID to install this item."))
+          (eq canInstall 4)
+            (setq result '(4 "Your ship already has a shield generator installed."))
+          (eq canInstall 5)
+            (setq result '(5 "Your ship already has a propulsion system installed."))
+          (eq canInstall 6)
+            (setq result '(6 "Your ship already has a missile launcher installed."))
+          (eq canInstall 7)
+            (setq result '(7 "Your ship's reactor is not powerful enough for this device."))
+          (eq canInstall 8)
+            (setq result '(8 "Your ship already has a cargo expansion system installed."))
+          (eq canInstall 9)
+            (setq result '(9 "Your ship already has a reactor installed."))
+          ;; XXX: this one can perhaps be 'normal'
+          (eq canInstall 10)
+            (setq result '(10 "The cargo expansion system is too large to be installed in your ship."))
+          ;; XXX: this one can perhaps be 'normal'
+          (eq canInstall 11)
+            (setq result '(11 "The power output of the item is too high for your ship."))
+          (eq canInstall 12)
+            (setq result '(12 "Your ship cannot support any more weapons."))
+          (eq canInstall 13)
+            (setq result '(13 "Your ship cannot support any more non-weapon devices."))
+          (not (eq canInstall 0))
+            (setq result '(14 "This item can not be installed."))
+          (setq result '(True))
+        )
+        ;; if result is True, then we install right away
+        (setq code (item result 0))
+        (if (or (eq code True) (find '(4 5 6 8 9) code) (and (not normal) (find '(1 3) code)))
+          (block (name)
+            (setq name (itmGetName itm 1))
+            (switch
+              (eq code 4)
+                (setq result (list True (cat "Replaced shield generator with " name)))
+              (eq code 5)
+                (setq result (list True (cat "Replaced propulsion system with " name)))
+              (eq code 6)
+                (block Nil
+                  (shpRemoveDevice target (item (objGetItems target "Il") 0))
+                  (setq result (list True (cat "Replaced missile launcher with " name)))
+                )
+              (eq code 8)
+                (setq result (list True (cat "Replaced current cargo expansion with " name)))
+              (eq code 9)
+                (setq result (list True (cat "Replaced reactor with " name)))
+              (setq result (list True (cat "Installed " name)))
+            )
+            (if (not cargo) (objAddItem target itm))
+            (shpInstallDevice target itm)
+          )
+        )
+        result
+      )
+    ))
+
+    )
+  </Globals>
 </TranscendenceExtension>
 <!--
-vim:enc=utf-8:nu:ai:si:et:ts=4:sw=4:ft=tscript:
+vim:ts=2:sw=2:sts=2:ft=tscript:
 -->
