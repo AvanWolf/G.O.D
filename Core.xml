@@ -23,15 +23,17 @@
     (block nil
 
     (setq god/core-screen (lambda nil (block nil
-      (dsf/new-screen 'god-core 'custompicker "G.O.D.")
+      (dsf/screen 'god-core "G.O.D." 'custompicker)
       (dsf/add-list-data (god/format-modules))
-      (dsf/new-action 'select "Select" 'S (lambda nil
+      (dsf/action 'select "Select" 'S (lambda nil
         (block (action)
           (setq action (dsf/list-entry 'action))
           (dsf/eval action)
         )
       ))
+      (dsf/save-action 'select true)
       (dsf/default-action 'select)
+      (dsf/exit-action)
       (dsf/show-screen)
     )))
 
@@ -40,7 +42,7 @@
       (if (not (setq modules god/formatted-modules)) (block nil
         ;; sort list once by weight, then by title
         (setq modules (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
-        (setq modules (dsf/list-sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
+        ;(setq modules (dsf/list-sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
         (setq god/formatted-modules modules)
       ))
       modules
