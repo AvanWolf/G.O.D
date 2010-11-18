@@ -20,13 +20,14 @@
 
     (setq module (list
       '((weight     9)
-        (title      (block nil
-          (if (objGetData gPlayerShip 'god/keeptimestop)
-            "TimeStop: Start"
-            "TimeStop: Persist"
-          )
+        (title      (if (objGetData gPlayerShip 'god/keeptimestop)
+          "TimeStop: Restart Time"
+          "TimeStop: Persist Timestop"
         ))
-        (subtitle   "Simply overpowering")
+        (subtitle   (if (objGetData gPlayerShip 'god/keeptimestop)
+          "Start time upon exiting G.O.D."
+          "Keep time stopped after exiting G.O.D."
+        ))
         (action     (block nil
           (if (objGetData gPlayerShip 'god/keeptimestop)
             (block nil

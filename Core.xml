@@ -25,24 +25,28 @@
 
     (setq god/core-screen (lambda nil (block nil
 
-      ;; add the timestop overlay
-      (if (not (objGetData gPlayerShip 'god/timeoverlay))
-        (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
-      )
       (dsf/filter-screen 'god-core "G.O.D")
       (dsf/list-data (god/format-modules))
-
-      (dsf/on-global-exit (lambda nil (block (oID)
-        (if (and (not (objGetData gPlayerShip 'god/keeptimestop))
-              (setq oID (objGetData gPlayerShip 'god/timeoverlay)))
-          (objRemoveOverlay gPlayerShip oid)
-        )
-      )))
 
       (dsf/action 'select "Select" 'S (lambda nil
         (dsf/eval (dsf/list-entry 'action))
       ))
       (dsf/save-action 'select true)
+
+      ;; timestop handlers
+      (dsf/on-init (lambda nil
+        (if (not (objGetData gPlayerShip 'god/timeoverlay))
+          (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
+        )
+      ))
+      (dsf/on-global-exit (lambda nil (block (oID keepStopped)
+        (setq oID (objGetData gPlayerShip 'god/timeoverlay))
+        (setq keepStopped (objGetData gPlayerShip 'god/keeptimestop))
+        (if (and (not keepStopped) oID) (block nil
+          (objRemoveOverlay gPlayerShip oID)
+          (objSetData gPlayerShip 'god/timeoverlay nil)
+        ))
+      )))
 
       (dsf/exit-action)
       (dsf/show-screen)
@@ -107,7 +111,6 @@
       </OnUpdate>
     </Events>
   </OverlayType>
-
 
   <Globals>
     (block Nil
