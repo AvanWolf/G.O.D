@@ -19,12 +19,22 @@
     (block (module)
 
     (setq module (list
-      '( (weight     0)
-         (title      "Refuel")
-         (subtitle   "Refuel your reactor.\nIf it is not fully refueled, contact me")
-         (action     (block nil
-           ;; pump it full of Longzhu's
-           (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
+      '( (weight      0)
+         (title       "Complete Restore")
+         (subtitle    (cat "Restore your ship completely.\n"
+            "Shields, armor, damaged items/devices,"
+            "refuel and fix paralysis/decomtamination/blindness.\n"
+            "Credits for this function goes to PM from Transcendence Forums!"))
+         (action      (block nil
+           (god/restore-ship gPlayerShip)
+           (dsf/description "Your ship has been completely restored.\n\n Thanks PM!!")
+         )))
+
+      '( (weight      0)
+         (title       "Refuel")
+         (subtitle    "Refuel your reactor.\nIf it is not fully refueled, contact me")
+         (action      (block nil
+           (god/refuel-ship)
            (dsf/description "Your Reactor has been refueled")
          )))
     ))
@@ -32,6 +42,34 @@
     (setq god/modules (if (isError god/modules)
       module
       (append god/modules module)
+    ))
+
+    (setq god/restore-ship (lambda (ship)
+      (block nil
+        ;; Remove status effects.
+        (objFixParalysis ship)
+        (shpFixBlindness ship)
+        (shpDecontaminate ship)
+
+        ;; refuel
+        (god/refuel-ship ship)
+
+        ; Shields
+        (shpRechargeShield ship 99999999)
+
+        ; Armor
+        (intArmorRepairAll ship 25 'alwaysRepair)
+
+        ; Everything else!
+        (objEnumItems ship "*~a D" itm (shpRepairItem ship itm))
+      )
+    ))
+
+    (setq god/refuel-ship (lambda (ship)
+      (if (eq gPlayerShip ship)
+        ;; pump it full of Longzhu's
+        (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
+      )
     ))
 
     )
