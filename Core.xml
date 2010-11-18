@@ -92,6 +92,23 @@
   <Globals>
     (block Nil
 
+    ;; split search term into search string and criteria
+    (setq god/split-filter (lambda (term)
+      (block (pos res)
+        ;; if the term has a divider find it's position
+        ;; and split the string at that position
+        (if (setq pos (strFind term "/"))
+          (block (str crit)
+            (setq crit (subset term 0 pos))
+            (setq str (subset term (add pos 1)))
+            (setq res (list crit str))
+          )
+          ;; else just return the term
+          (setq res term)
+        )
+      )
+    ))
+
     ;; returns True or a tuple with error code and error message
     ;; we only fail on a few of the conditions, namely those
     ;; that can not be fixed without user input

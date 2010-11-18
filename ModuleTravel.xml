@@ -41,7 +41,7 @@
               (current (sysGetNode))
               (data (list)))
 
-        (dsf/screen 'travel-galaxy "Travel Galaxy" 'custompicker)
+        (dsf/filter-screen 'travel-galaxy "Travel Galaxy")
 
         ;; TODO: build a much more advanced system list (in correct order)
         ;; sort by level
@@ -62,6 +62,7 @@
           (setq node (dsf/list-entry 'node))
           (setq gate (item (sysGetStargates node) 0))
           (objGateTo gPlayerShip node gate &efStargateOut;)
+          (plyMessage gPlayer (cat "Gated to " (sysGetName node)))
           (dsf/exit)
         )))
 
@@ -72,9 +73,47 @@
     ))
 
     (setq god/travel-system (lambda nil
-      (block nil
-        (dsf/screen 'travel-system "Travel System" 'custompicker)
+      (block (default-term exp)
+
+        (setq default-term "TAMF")
+
+        ;; build an expression to filter the data by.
+        ;; In reality we do all the data generation in here
+        (setq exp (lambda (data) (block (term objects (data (list)))
+          (setq term (or (dsf/data-get 'filter-term) default-term))
+          (setq term (god/split-filter term))
+          (if (isAtom term)
+            (setq objects (sysFindObject gPlayerShip term))
+            (setq objects (sysFindObject gPlayerShip (item term 0)))
+          )
+          (enum objects o (lnkAppend data (list
+            (list 'title (objGetName o))
+            (list 'obj o)
+          )))
+          (if (not (isAtom term)) (block nil
+            (setq objects (list))
+            (enum data el (if (strFind (dsf/hash-get el 'title) (item term 1))
+              (lnkAppend objects el)
+            ))
+            (setq data objects)
+          ))
+          data
+        )))
+
+        (dsf/filter-screen 'travel-system "Travel System" exp)
+        (dsf/data-set 'filter-term default-term)
+
+        (dsf/action 'jump "Jump to location" 'J (lambda nil
+          (block (o)
+            (setq o (dsf/list-entry 'obj))
+            (objJumpTo gPlayerShip (sysVectorRandom (objGetPos o) 8 4 "*"))
+            (plyMessage gPlayer (cat "Jumped to " (objGetName o)))
+            (dsf/exit)
+          )
+        ))
+
         (dsf/back-action)
+        (dsf/exit-action)
         (dsf/show-screen)
       )
     ))
@@ -82,6 +121,8 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; HELPERS
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
     ;; edge cases:
     ;;  - destination system has no gates
