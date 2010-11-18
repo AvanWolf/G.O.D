@@ -19,24 +19,34 @@
     (block (module)
 
     (setq module (list
-      '( (weight      0)
-         (title       "Complete Restore")
-         (subtitle    (cat "Restore your ship completely.\n"
-            "Shields, armor, damaged items/devices,"
-            "refuel and fix paralysis/decomtamination/blindness.\n"
-            "Credits for this function goes to PM from Transcendence Forums!"))
-         (action      (block nil
-           (god/restore-ship gPlayerShip)
-           (dsf/description "Your ship has been completely restored.\n\n Thanks PM!!")
-         )))
+      '((weight     0)
+        (title      "Complete Restore")
+        (subtitle   (cat "Restore your ship completely.\n"
+          "Shields, armor, damaged items/devices,"
+          "refuel and fix paralysis/decomtamination/blindness.\n"
+          "Credits for this function goes to PM from Transcendence Forums!"))
+        (action      (block nil
+          (god/restore-target gPlayerShip)
+          (dsf/description "Your ship has been completely restored.\n\n Thanks PM!!")
+        )))
 
-      '( (weight      0)
-         (title       "Refuel")
-         (subtitle    "Refuel your reactor.\nIf it is not fully refueled, contact me")
-         (action      (block nil
-           (god/refuel-ship)
-           (dsf/description "Your Reactor has been refueled")
-         )))
+      '((weight     0)
+        (title      "Refuel")
+        (subtitle   "Refuel your reactor.\nIf it is not fully refueled, contact me")
+        (action     (block nil
+          (god/refuel-ship)
+          (dsf/description "Your Reactor has been refueled")
+        )))
+
+      '((weight     0)
+        (title      "Restore Target")
+        (subtitle   "Restore your current target completely")
+        (hide       (not (objGetTarget gPlayerShip)))
+        (action     (block nil
+          (god/restore-target (objGetTarget gPlayerShip))
+          (dsf/description "Your target has been restored")
+        )))
+
     ))
 
     (setq god/modules (if (isError god/modules)
@@ -44,29 +54,35 @@
       (append god/modules module)
     ))
 
-    (setq god/restore-ship (lambda (ship)
+    (setq god/restore-target (lambda (target)
       (block nil
-        ;; Remove status effects.
-        (objFixParalysis ship)
-        (shpFixBlindness ship)
-        (shpDecontaminate ship)
 
-        ;; refuel
-        (god/refuel-ship ship)
+        (if (objIsShip target) (block nil
+          ;; fix states
+          (objFixParalysis target)
+          (shpFixBlindness target)
+          (shpDecontaminate target)
 
-        ; Shields
-        (shpRechargeShield ship 99999999)
+          ;; refuel
+          (god/refuel-target target)
 
-        ; Armor
-        (intArmorRepairAll ship 25 'alwaysRepair)
+          ;; repair shields
+          (shpRechargeShield target 99999999)
 
-        ; Everything else!
-        (objEnumItems ship "*~a D" itm (shpRepairItem ship itm))
+          ; repair all items/devices
+          (objEnumItems target "*~a D" itm (shpRepairItem target itm))
+        ))
+
+        ;; repair armor
+        (objEnumItems target "a" armor
+          (objRepairArmor target armor)
+        )
+
       )
     ))
 
-    (setq god/refuel-ship (lambda (ship)
-      (if (eq gPlayerShip ship)
+    (setq god/refuel-target (lambda (target)
+      (if (eq gPlayerShip target)
         ;; pump it full of Longzhu's
         (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
       )
