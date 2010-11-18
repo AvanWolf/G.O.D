@@ -25,7 +25,7 @@
          (action     (block nil
            ;; pump it full of Longzhu's
            (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
-           (dsf/pane-description "Your Reactor has been refueled")
+           (dsf/description "Your Reactor has been refueled")
          )))
     ))
 

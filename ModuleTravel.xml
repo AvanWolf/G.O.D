@@ -39,24 +39,24 @@
     (setq god/travel-galaxy (lambda nil
       (block ((systems (sysGetNodes))
               (current (sysGetNode))
-              (custompicker (list)))
+              (data (list)))
 
         (dsf/screen 'travel-galaxy "Travel Galaxy" 'custompicker)
 
         ;; TODO: build a much more advanced system list (in correct order)
         ;; sort by level
         (setq systems (dsf/list-sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
-        ;; filter out endgame
+        ;; filter out endgame (or any others systems with no gates)
         (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
 
         ;; build a custompicker list
         (enum systems s (if (not (eq s current))
-          (lnkAppend custompicker (list
+          (lnkAppend data (list
             (list 'title (sysGetName s))
             (list 'node s)
           ))
         ))
-        (dsf/add-list-data custompicker)
+        (dsf/list-data data)
 
         (dsf/action 'gate "Gate to System" 'G (lambda nil (block (node gate)
           (setq node (dsf/list-entry 'node))

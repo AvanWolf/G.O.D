@@ -23,16 +23,15 @@
     (block nil
 
     (setq god/core-screen (lambda nil (block nil
-      (dsf/screen 'god-core "G.O.D." 'custompicker)
-      (dsf/add-list-data (god/format-modules))
+      (dsf/filter-screen 'god-core "G.O.D")
+      (dsf/list-data (god/format-modules))
+
+
       (dsf/action 'select "Select" 'S (lambda nil
-        (block (action)
-          (setq action (dsf/list-entry 'action))
-          (dsf/eval action)
-        )
+        (dsf/eval (dsf/list-entry 'action))
       ))
       (dsf/save-action 'select true)
-      (dsf/default-action 'select)
+
       (dsf/exit-action)
       (dsf/show-screen)
     )))
