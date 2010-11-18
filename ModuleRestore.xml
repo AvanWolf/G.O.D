@@ -21,10 +21,13 @@
     (setq module (list
       '((weight     0)
         (title      "Complete Restore")
-        (subtitle   (cat "Restore your ship completely.\n"
-          "Shields, armor, damaged items/devices,"
-          "refuel and fix paralysis/decomtamination/blindness.\n"
-          "Credits for this function goes to PM from Transcendence Forums!"))
+        (subtitle   (cat
+          "Restore your ship completely.\n"
+          "Refuel, fix damage/items, remove negative states, "
+          "reset Domina powers and various timers, "
+          "fix bad ranks and standings.\n"
+          "Credits for this function goes to PM from Transcendence Forums!"
+        ))
         (action      (block nil
           (god/restore-target gPlayerShip)
           (dsf/description "Your ship has been completely restored.\n\n Thanks PM!!")
@@ -32,9 +35,9 @@
 
       '((weight     0)
         (title      "Refuel")
-        (subtitle   "Refuel your reactor.\nIf it is not fully refueled, contact me")
+        (subtitle   "Refuel your reactor.\nIf it is not fully refueled, contact me!")
         (action     (block nil
-          (god/refuel-ship)
+          (god/refuel-player)
           (dsf/description "Your Reactor has been refueled")
         )))
 
@@ -63,14 +66,25 @@
           (shpFixBlindness target)
           (shpDecontaminate target)
 
-          ;; refuel
-          (god/refuel-target target)
-
           ;; repair shields
           (shpRechargeShield target 99999999)
 
           ; repair all items/devices
           (objEnumItems target "*~a D" itm (shpRepairItem target itm))
+
+          ;; refuel
+          (if (eq gPlayerShip target) (block nil
+            (god/refuel-player)
+
+            ;; fix domina and ranks
+            (typSetGlobalData &stDomina; "lastInvokeTime1" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime2" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime3" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime4" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime5" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime6" 0)
+
+          ))
         ))
 
         ;; repair armor
@@ -81,12 +95,10 @@
       )
     ))
 
-    (setq god/refuel-target (lambda (target)
-      (if (eq gPlayerShip target)
-        ;; pump it full of Longzhu's
-        (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
-      )
-    ))
+    (setq god/refuel-player (lambda nil
+      ;; pump it full of Longzhu's
+      (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
+    )))
 
     )
   </Globals>
