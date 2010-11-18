@@ -41,7 +41,8 @@
               (current (sysGetNode))
               (data (list)))
 
-        (dsf/filter-screen 'travel-galaxy "Travel Galaxy")
+        (dsf/screen 'travel-galaxy "Travel Galaxy")
+        (dsf/filter-screen)
 
         ;; TODO: build a much more advanced system list (in correct order)
         ;; sort by level
@@ -100,7 +101,8 @@
           data
         )))
 
-        (dsf/filter-screen 'travel-system "Travel System" exp)
+        (dsf/screen 'travel-system "Travel System")
+        (dsf/filter-screen exp)
         (dsf/data-set 'filter-term default-term)
 
         (dsf/action 'jump "Jump to location" 'J (lambda nil
