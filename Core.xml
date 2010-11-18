@@ -5,6 +5,7 @@
 
     <!ENTITY itGODCoreHook              "0xDCBA0501">
     <!ENTITY stGODCoreStation           "0xDCBA0502">
+    <!ENTITY ovGODTimeStop              "0xDCBA0503">
 
 ]>
 
@@ -23,9 +24,20 @@
     (block nil
 
     (setq god/core-screen (lambda nil (block nil
+
+      ;; add the timestop overlay
+      (if (not (objGetData gPlayerShip 'god/timeoverlay))
+        (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
+      )
       (dsf/filter-screen 'god-core "G.O.D")
       (dsf/list-data (god/format-modules))
 
+      (dsf/on-global-exit (lambda nil (block (oID)
+        (if (and (not (objGetData gPlayerShip 'god/keeptimestop))
+              (setq oID (objGetData gPlayerShip 'god/timeoverlay)))
+          (objRemoveOverlay gPlayerShip oid)
+        )
+      )))
 
       (dsf/action 'select "Select" 'S (lambda nil
         (dsf/eval (dsf/list-entry 'action))
@@ -87,6 +99,14 @@
       </OnGlobalPlayerEnteredSystem>
     </Events>
   </StationType>
+
+  <OverlayType UNID="&ovGODTimeStop;">
+    <Events>
+      <OnUpdate>
+        (sysStopTime 30 gPlayerShip)
+      </OnUpdate>
+    </Events>
+  </OverlayType>
 
 
   <Globals>

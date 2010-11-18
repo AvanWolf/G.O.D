@@ -1,0 +1,57 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleMisc      "0xDCBA0512">
+]>
+
+<TranscendenceExtension
+  UNID="&modGODModuleMisc;"
+  name="G.O.D. Module - Misc"
+  credits="alterecco"
+  version="1.0">
+
+<!--
+;   License:
+;     Public Domain - alterecco@gmail.com - 2010
+-->
+
+  <Globals>
+    (block (module)
+
+    (setq module (list
+      '((weight     9)
+        (title      (block nil
+          (if (objGetData gPlayerShip 'god/keeptimestop)
+            "TimeStop: Start"
+            "TimeStop: Persist"
+          )
+        ))
+        (subtitle   "Simply overpowering")
+        (action     (block nil
+          (if (objGetData gPlayerShip 'god/keeptimestop)
+            (block nil
+              (objSetData gPlayerShip 'god/keeptimestop nil)
+              (dsf/description "Starting time again on exit")
+            )
+            (block nil
+              (objSetData gPlayerShip 'god/keeptimestop true)
+              (dsf/description "Keeping time stopped on exit")
+            )
+          )
+          (dsf/show-screen)
+        )))
+    ))
+
+    ;; handle modules
+    (setq god/modules (if (isError god/modules)
+      module
+      (append god/modules module)
+    ))
+
+    )
+  </Globals>
+
+</TranscendenceExtension>
+<!--
+vim:ts=2:sw=2:sts=2:ft=tscript:
+-->
