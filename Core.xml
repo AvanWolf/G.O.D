@@ -23,61 +23,342 @@
   <Globals>
     (block nil
 
-    (setq god/core-screen (lambda nil (block nil
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; {{{ CORE VARIABLES
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-      (dsf/filter-screen 'god-core "G.O.D")
-      (dsf/list-data (god/format-modules))
+  ;;; This is a global variable that holds all the modules.
+  ;;; We define it like this, since we allow for other
+  ;;; files to append their modules as well.
+  ;;; Basically it is data to be used for a custompicker list
+  (setq god/modules (if (isError god/modules)
+    (list)
+    god/modules
+  ))
 
-      (dsf/action 'select "Select" 'S (lambda nil
-        (dsf/eval (dsf/list-entry 'action))
-      ))
-      (dsf/save-action 'select true)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; {{{ MODULE - REFUEL
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-      ;; timestop handlers
-      (dsf/on-init (lambda nil
-        (if (not (objGetData gPlayerShip 'god/timeoverlay))
-          (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
-        )
-      ))
-      (dsf/on-global-exit (lambda nil (block (oID keepStopped)
-        (setq oID (objGetData gPlayerShip 'god/timeoverlay))
-        (setq keepStopped (objGetData gPlayerShip 'god/keeptimestop))
-        (if (and (not keepStopped) oID) (block nil
-          (objRemoveOverlay gPlayerShip oID)
-          (objSetData gPlayerShip 'god/timeoverlay nil)
+  (lnkAppend god/modules '(
+    (weight       0)
+    (title        "Refuel")
+    (subtitle     "Refuel your reactor.\nIf it is not fully refueled, contact me!")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (god/refuel-player)
+        (dsf/description "Your Reactor has been refueled")
+      )))
+    ))
+  ))
+
+  (setq god/refuel-player (lambda nil
+    ;; pump it full of Longzhu's
+    (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - RESTORE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       0)
+    (title        "Restore")
+    (subtitle     (cat
+      "Restore a target completely.\n"
+      "Refuel, fix damage/items, remove negative states, "
+      "reset Domina powers and various timers, "
+      "fix bad ranks and standings. (some are player only)\n"
+      "Credits for this function goes to PM from Transcendence Forums!"
+    ))
+    (on-select    (block nil
+      (dsf/action 'player "Restore Player" 'P
+        (lambda nil (block nil
+          (god/restore-target gPlayerShip)
+          (dsf/description "Restored your ship")
         ))
+      )
+      (dsf/action 'target "Restore Target" 'T
+        (lambda nil (block nil
+          (god/restore-target (objGetTarget gPlayerShip))
+          (dsf/description "Restored your current target")
+        ))
+      )
+      (dsf/disable-action 'target (not (objGetTarget gPlayerShip)))
+    ))
+  ))
+
+  (setq god/restore-target (lambda (target)
+    (block nil
+
+      (if (objIsShip target) (block nil
+        ;; fix states
+        (objFixParalysis target)
+        (shpFixBlindness target)
+        (shpDecontaminate target)
+
+        ;; repair shields
+        (shpRechargeShield target 99999999)
+
+        ; repair all items/devices
+        (objEnumItems target "*~a D" itm (shpRepairItem target itm))
+
+        ;; refuel
+        (if (eq gPlayerShip target) (block nil
+          (god/refuel-player)
+
+          ;; fix domina and ranks
+          (typSetGlobalData &stDomina; "lastInvokeTime1" 0)
+          (typSetGlobalData &stDomina; "lastInvokeTime2" 0)
+          (typSetGlobalData &stDomina; "lastInvokeTime3" 0)
+          (typSetGlobalData &stDomina; "lastInvokeTime4" 0)
+          (typSetGlobalData &stDomina; "lastInvokeTime5" 0)
+          (typSetGlobalData &stDomina; "lastInvokeTime6" 0)
+
+        ))
+      ))
+
+      ;; repair armor
+      (objEnumItems target "a" armor
+        (objRepairArmor target armor)
+      )
+
+    )
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - TRAVEL
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight     1)
+    (title      "Travel")
+    (subtitle   "Travel to any place in current system or to somewhere in the galaxy")
+    (on-select  (block nil
+      (dsf/action 'galaxy "Galaxy" 'G (lambda nil (block nil
+        (god/travel-galaxy)
+      )))
+      (dsf/action 'system "System" 'S (lambda nil (block nil
+        (god/travel-system)
+      )))
+      (dsf/save-action 'galaxy true)
+      (dsf/save-action 'system true)
+    ))
+  ))
+
+  (setq god/travel-galaxy (lambda nil
+    (block ((systems (sysGetNodes))
+            (current (sysGetNode))
+            (data (list)))
+
+      (dsf/screen 'travel-galaxy "Travel Galaxy")
+      (dsf/filter-screen)
+
+      ;; TODO: build a much more advanced system list (in correct order)
+      ;; sort by level
+      (setq systems (fn/list-sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
+      ;; filter out endgame (or any others systems with no gates)
+      (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
+
+      ;; build a custompicker list
+      (enum systems s (if (not (eq s current))
+        (lnkAppend data (list
+          (list 'title (sysGetName s))
+          (list 'node s)
+        ))
+      ))
+      (dsf/list-data data)
+
+      (dsf/action 'gate "Gate to System" 'G (lambda nil (block (node gate)
+        (setq node (dsf/list-entry 'node))
+        (setq gate (item (sysGetStargates node) 0))
+        (objGateTo gPlayerShip node gate &efStargateOut;)
+        (plyMessage gPlayer (cat "Gating to " (sysGetName node)))
+        (dsf/exit)
       )))
 
-      (dsf/exit-action)
       (dsf/show-screen)
-    )))
+    )
+  ))
 
-    ;; gather all the G.O.D modules into one custompicker list
-    (setq god/format-modules (lambda nil (block (modules (list))
-      (if (not (setq modules god/formatted-modules)) (block nil
-        ;; sort list once by weight, then by title
-        (setq modules (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
-        ;(setq modules (dsf/list-sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
-        (setq god/formatted-modules modules)
+  (setq god/travel-system (lambda nil
+    (block (default-term exp)
+
+      (setq default-term "TAMF")
+
+      ;; build an expression to filter the data by.
+      ;; In reality we do all the data generation in here
+      (setq exp (lambda (data) (block (term objects (data (list)))
+        (setq term (or (dsf/data-get 'filter-term) default-term))
+        (setq term (god/split-filter term))
+        (if (isAtom term)
+          (setq objects (sysFindObject gPlayerShip term))
+          (setq objects (sysFindObject gPlayerShip (item term 0)))
+        )
+        (enum objects o (lnkAppend data (list
+          (list 'title (objGetName o))
+          (list 'obj o)
+        )))
+        (if (not (isAtom term)) (block nil
+          (setq objects (list))
+          (enum data el (if (strFind (fn/hash-get el 'title) (item term 1))
+            (lnkAppend objects el)
+          ))
+          (setq data objects)
+        ))
+        data
+      )))
+
+      (dsf/screen 'travel-system "Travel System")
+      (dsf/filter-screen exp)
+      (dsf/data-set 'filter-term default-term)
+
+      (dsf/action 'jump "Jump to location" 'J (lambda nil
+        (block (o)
+          (setq o (dsf/list-entry 'obj))
+          (objJumpTo gPlayerShip (sysVectorRandom (objGetPos o) 8 4 "*"))
+          (plyMessage gPlayer (cat "Jumped to " (objGetName o)))
+          (dsf/exit)
+        )
       ))
-      modules
+
+      (dsf/show-screen)
+    )
+  ))
+
+;  ;; edge cases:
+;  ;;  - destination system has no gates
+;  ;;  - current system has only one gate and it leads somewhere
+;  ;;    we have already been
+;  ;;  - all systems have been accounted for
+;  (setq god/gate-list (lambda (systems current gate)
+;    (block (all dest)
+;      (setq all (sysGetNodes))
+;      (setq dest (sysGetStargateDestinationNode current gate))
+; 
+;      (switch
+;        (eq all systems)
+;          nil
+;        (eq (count (sysGetStargates dest)) 0)
+;          nil
+;      )
+;    )
+;  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - TIMESTOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight     9)
+    (title      "Time Stop")
+    (subtitle   "Stop time and start it again. Great for taking a look around")
+    (on-select  (block (state)
+      (setq state (objGetData gPlayerShip 'god/keeptimestop))
+      (dsf/action 'toggle
+        (if state "Start Time" "Stop Time") 'S
+        (lambda nil (if state
+          (block nil
+            (objSetData gPlayerShip 'god/keeptimestop nil)
+            (dsf/description "Started time")
+          )
+          (block nil
+            (objSetData gPlayerShip 'god/keeptimestop true)
+            (dsf/description "Stopped time")
+          )
+        ))
+      )
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; {{{ CORE SCREEN
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (setq god/core-screen (lambda nil (block nil
+    (dsf/screen 'god-core "G.O.D" 'custompicker)
+    (dsf/filter-screen)
+    (dsf/list-data god/modules)
+    (dsf/no-back true)
+
+    ;; timestop handlers
+    (dsf/on-init (lambda nil
+      (if (not (objGetData gPlayerShip 'god/timeoverlay))
+        (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
+      )
+    ))
+    (dsf/on-global-exit (lambda nil (block (oID keepStopped)
+      (setq oID (objGetData gPlayerShip 'god/timeoverlay))
+      (setq keepStopped (objGetData gPlayerShip 'god/keeptimestop))
+      (if (and (not keepStopped) oID) (block nil
+        (objRemoveOverlay gPlayerShip oID)
+        (objSetData gPlayerShip 'god/timeoverlay nil)
+      ))
     )))
 
-    ;;; This is a global variable that holds all the modules
-    (setq god/modules (if (isError god/modules)
-      (list)
-      god/modules
-    ))
+    (dsf/show-screen)
+  )))
 
-    ;;; This global variable is used to store the formatted list of modules
-    ;;; so that we don't have to recreate it on every run.
-    ;;; This allows us to make the building of the list more expensive
-    ;;; We don't save this on the ship so we can catch changes to the
-    ;;; modules made between sessions
-    (setq god/formatted-modules nil)
+
+;    (setq god/core-screen (lambda nil (block nil
+;
+;      (dsf/screen 'god-core "G.O.D")
+;      (dsf/filter-screen)
+;      (dsf/list-data (god/format-modules))
+;
+;      (dsf/action 'select "Select" 'S (lambda nil
+;        (dsf/eval (dsf/list-entry 'action))
+;      ))
+;      (dsf/save-action 'select true)
+;
+;      ;; timestop handlers
+;      (dsf/on-init (lambda nil
+;        (if (not (objGetData gPlayerShip 'god/timeoverlay))
+;          (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
+;        )
+;      ))
+;      (dsf/on-global-exit (lambda nil (block (oID keepStopped)
+;        (setq oID (objGetData gPlayerShip 'god/timeoverlay))
+;        (setq keepStopped (objGetData gPlayerShip 'god/keeptimestop))
+;        (if (and (not keepStopped) oID) (block nil
+;          (objRemoveOverlay gPlayerShip oID)
+;          (objSetData gPlayerShip 'god/timeoverlay nil)
+;        ))
+;      )))
+;
+;      (dsf/exit-action)
+;      (dsf/show-screen)
+;    )))
+;
+;    ;; gather all the G.O.D modules into one custompicker list
+;    (setq god/format-modules (lambda nil (block (modules (list))
+;      (if (not (setq modules god/formatted-modules)) (block nil
+;        ;; sort list once by weight, then by title
+;        (setq modules (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
+;        ;(setq modules (dsf/list-sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
+;        (setq god/formatted-modules modules)
+;      ))
+;      modules
+;    )))
+;
+;    ;;; This global variable is used to store the formatted list of modules
+;    ;;; so that we don't have to recreate it on every run.
+;    ;;; This allows us to make the building of the list more expensive
+;    ;;; We don't save this on the ship so we can catch changes to the
+;    ;;; modules made between sessions
+;    (setq god/formatted-modules nil)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     )
   </Globals>
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; {{{ CORE ITEMS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   <ItemType UNID="&itGODCoreHook;"
     name=           "G.O.D."
@@ -111,6 +392,9 @@
       </OnUpdate>
     </Events>
   </OverlayType>
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   <Globals>
     (block Nil
