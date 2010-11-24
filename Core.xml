@@ -128,83 +128,147 @@
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - BROWSE ITEMS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       2)
+    (title        "Browse Items")
+    (subtitle     "...")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil
+        (block nil
+          (dsf/screen 'item-browser "Item Browser")
+          (dsf/item-browser (fn/list-map (itmGetTypes "*V") itm (itmCreate itm 1)))
+
+          (dsf/action 'add-to-cargo "Add to Cargo Hold" 'A (lambda nil
+            (block nil
+              (if (eq (dsf/pane) "Counter")
+                (block (cnt itm inventory)
+                  ;; add item
+                  (setq cnt (dsf/counter))
+                  (setq itm (itmCreate (itmGetUNID (dsf/item)) cnt))
+                  ;; add the item to the inventory that is to be restored
+                  ;; NOTE: this will go away in 1.04!
+                  (setq inventory (objGetData gPlayerShip 'player-inventory))
+                  (lnkAppend inventory itm)
+                  (objSetData gPlayerShip 'player-inventory inventory)
+                  (dsf/pane "Default")
+                  (dsf/action-label 'add-to-cargo "Add to Cargo Hold")
+                  (dsf/action-key 'add-to-cargo 'A)
+                  (dsf/description "Your request has been fulfilled")
+                )
+                (block nil
+                  (dsf/pane "Counter")
+                  (dsf/counter 1)
+                  (dsf/action-label 'add-to-cargo "Finish")
+                  (dsf/action-key 'add-to-cargo 'F)
+                  (dsf/description (cat "Select the amount of \"" (itmGetName (dsf/item) 3) "\" you want to add to your cargo hold"))
+                )
+              )
+            )
+          ))
+          (dsf/action 'identify-single "Identify Current Item" 'C (lambda nil
+            (block (itm)
+              (setq itm (dsf/item))
+              (itmSetReference itm)
+              (itmSetKnown itm)
+              ;; TODO: add success description (once we have some mechanism)
+              (dsf/show-screen)
+            )
+          ))
+          (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
+            (block nil
+              (objEnumItems gPlayerShip "*U" itm (block nil
+                (itmSetReference itm)
+                (itmSetKnown itm)
+              ))
+              ;; TODO: add success description (once we have some mechanism)
+              (dsf/show-screen)
+            )
+          ))
+              
+          (dsf/show-screen)
+        )
+      ))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - TRAVEL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
     (weight     1)
-    (title      "Travel")
-    (subtitle   "Travel to any place in current system or to somewhere in the galaxy")
+    (title      "Travel Galaxy")
+    (subtitle   "Journey instantly to another system in this galaxy")
     (on-select  (block nil
-      (dsf/action 'galaxy "Galaxy" 'G (lambda nil (block nil
-        (god/travel-galaxy)
-      )))
-      (dsf/action 'system "System" 'S (lambda nil (block nil
-        (god/travel-system)
-      )))
-      (dsf/save-action 'galaxy true)
-      (dsf/save-action 'system true)
+      (dsf/action 'select "Select" 'S (lambda nil
+        (block ((systems (sysGetNodes))
+                (current (sysGetNode))
+                (data (list)))
+
+          (dsf/screen 'travel-galaxy "Travel Galaxy")
+          (dsf/filter-screen)
+
+          ;; TODO: build a much more advanced system list (in correct order)
+          ;; sort by level
+          (setq systems (fn/list-sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
+          ;; filter out endgame (or any others systems with no gates)
+          (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
+
+          ;; build a custompicker list
+          (enum systems s (if (not (eq s current))
+            (lnkAppend data (list
+              (list 'title (sysGetName s))
+              (list 'node s)
+            ))
+          ))
+          (dsf/list-data data)
+
+          (dsf/action 'gate "Select" 'S (lambda nil (block (node gate)
+            (setq node (dsf/list-entry 'node))
+            (setq gate (item (sysGetStargates node) 0))
+            (objGateTo gPlayerShip node gate &efStargateOut;)
+            (plyMessage gPlayer (cat "Gating to " (sysGetName node)))
+            (dsf/exit)
+          )))
+          (dsf/disable-action 'gate (lambda nil (not (dsf/list-entry))))
+
+          (dsf/show-screen)
+        )
+      ))
+    ))
+  ))
+  (lnkAppend god/modules '(
+    (weight     1)
+    (title      "Travel Current System")
+    (subtitle   "Journey instantly to another place in this system")
+    (on-select  (block nil
+      (dsf/action 'select "Select" 'S (lambda nil
+        (block nil
+
+          (dsf/screen 'travel-system "Travel System")
+          (dsf/data-set 'default-filter-term "TAMF")
+          (dsf/object-browser)
+
+          (dsf/action 'jump "Select" 'S (lambda nil
+            (block (o)
+              (setq o (dsf/list-entry 'obj))
+              (objJumpTo gPlayerShip (sysVectorRandom (objGetPos o) 8 4 "*"))
+              (plyMessage gPlayer (cat "Jumped to " (objGetName o)))
+              (dsf/exit)
+            )
+          ))
+          (dsf/disable-action 'jump (lambda nil (not (dsf/list-entry))))
+
+          (dsf/show-screen)
+        )
+      ))
     ))
   ))
 
-  (setq god/travel-galaxy (lambda nil
-    (block ((systems (sysGetNodes))
-            (current (sysGetNode))
-            (data (list)))
-
-      (dsf/screen 'travel-galaxy "Travel Galaxy")
-      (dsf/filter-screen)
-
-      ;; TODO: build a much more advanced system list (in correct order)
-      ;; sort by level
-      (setq systems (fn/list-sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
-      ;; filter out endgame (or any others systems with no gates)
-      (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
-
-      ;; build a custompicker list
-      (enum systems s (if (not (eq s current))
-        (lnkAppend data (list
-          (list 'title (sysGetName s))
-          (list 'node s)
-        ))
-      ))
-      (dsf/list-data data)
-
-      (dsf/action 'gate "Gate to System" 'G (lambda nil (block (node gate)
-        (setq node (dsf/list-entry 'node))
-        (setq gate (item (sysGetStargates node) 0))
-        (objGateTo gPlayerShip node gate &efStargateOut;)
-        (plyMessage gPlayer (cat "Gating to " (sysGetName node)))
-        (dsf/exit)
-      )))
-      (dsf/disable-action 'gate (lambda nil (not (dsf/list-entry))))
-
-      (dsf/show-screen)
-    )
-  ))
-
-  (setq god/travel-system (lambda nil
-    (block nil
-
-      (dsf/screen 'travel-system "Travel System")
-      (dsf/data-set 'default-filter-term "TAMF")
-      (dsf/object-browser)
-
-      (dsf/action 'jump "Jump to location" 'J (lambda nil
-        (block (o)
-          (setq o (dsf/list-entry 'obj))
-          (objJumpTo gPlayerShip (sysVectorRandom (objGetPos o) 8 4 "*"))
-          (plyMessage gPlayer (cat "Jumped to " (objGetName o)))
-          (dsf/exit)
-        )
-      ))
-      (dsf/disable-action 'jump (lambda nil (not (dsf/list-entry))))
-
-      (dsf/show-screen)
-    )
-  ))
-
-;  ;; edge cases:
+;  ;; system list edge cases:
 ;  ;;  - destination system has no gates
 ;  ;;  - current system has only one gate and it leads somewhere
 ;  ;;    we have already been
