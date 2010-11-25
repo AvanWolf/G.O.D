@@ -42,7 +42,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       0)
+    (weight       1)
     (title        "Refuel")
     (subtitle     "Refuel your reactor.\nIf it is not fully refueled, contact me!")
     (on-select    (block nil
@@ -63,7 +63,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       0)
+    (weight       1)
     (title        "Restore")
     (subtitle     (cat
       "Restore a target completely.\n"
@@ -132,7 +132,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       2)
+    (weight       3)
     (title        "Browse Items")
     (subtitle     "...")
     (on-select    (block nil
@@ -199,7 +199,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight     1)
+    (weight     2)
     (title      "Travel Galaxy")
     (subtitle   "Journey instantly to another system in this galaxy")
     (on-select  (block nil
@@ -297,7 +297,7 @@
     (subtitle   "Stop time and start it again. Great for taking a look around")
     (on-select  (block (state)
       (setq state (objGetData gPlayerShip 'god/keeptimestop))
-      (dsf/action 'toggle
+      (dsf/action 'toggle-time
         (if state "Start Time" "Stop Time") 'S
         (lambda nil (if state
           (block nil
@@ -318,10 +318,13 @@
 ;;;; {{{ CORE SCREEN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (setq god/core-screen (lambda nil (block nil
+  (setq god/core-screen (lambda nil (block (modules)
     (dsf/screen 'god-core "G.O.D" 'custompicker)
     (dsf/filter-screen)
-    (dsf/list-data god/modules)
+
+    ;; sort list by weight
+    (setq modules (fn/list-sort god/modules a b (ls (fn/hash-get a 'weight) (fn/hash-get b 'weight))))
+    (dsf/list-data modules)
     (dsf/no-back true)
 
     ;; timestop handlers
