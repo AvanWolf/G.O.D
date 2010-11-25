@@ -1,0 +1,239 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleObjectSpawn        "0xDCBA0510">
+    <!ENTITY svGODRed                       "0xDCBA0511">
+    <!ENTITY svGODBlue                      "0xDCBA0512">
+    <!ENTITY svGODGreen                     "0xDCBA0513">
+]>
+
+<TranscendenceExtension
+  UNID="&modGODModuleObjectSpawn;"
+  name="G.O.D. Module - Object Spawn"
+  credits="alterecco"
+  version="1.0">
+
+  <Globals>
+    (block (module)
+
+    (setq module (list
+      '((weight       0)
+        (title        "Space Objects")
+        (subtitle     "...")
+        (on-select    (block nil
+          (dsf/action 'select "Select" 'S (lambda nil
+            (block nil
+              (god/spawn-list)
+            )
+          ))
+        ))
+      )
+    ))
+
+    (setq god/modules (if (isError god/modules)
+      module
+      (append god/modules module)
+    ))
+
+    (setq god/spawn-list (lambda nil
+      (block (spawn (data (list)))
+
+        (dsf/screen 'spawn-list "Spawn List")
+        (dsf/filter-screen)
+
+        (setq spawn (sysFindObject nil "st D:GODSpawn"))
+
+        (dsf/list-data (fn/list-map spawn obj (list
+          (list 'title      (objGetName obj))
+          (list 'subtitle   "...")
+        )))
+
+        (dsf/action 'add "Add Object" 'A god/type-spawn-browser)
+        (dsf/no-save 'add true)
+
+        (dsf/action 'spawn "Spawn!" 'S (lambda nil
+          (block nil
+            (enum (sysFindObject nil "st D:GODSpawn") obj
+              (objResume obj)
+            )
+            (plyMessage gPlayer "Spawned all objects")
+            (dsf/exit)
+          )
+        ))
+
+        (dsf/show-screen)
+      )
+    ))
+
+    (setq god/type-spawn-browser (lambda nil
+      (block (list-fn)
+
+        (dsf/screen 'type-spawn-browser "Spawn Types")
+        ;; add a nice filter function
+        ;; document that attributes can be filtered with +/-
+        (dsf/filter-screen (lambda (data) (block (term)
+          (if (setq term (dsf/data-get 'filter-term))
+            (block (char)
+              (setq char (subset term 0 1))
+              (switch
+                (eq char '+)
+                  (filter data el (typHasAttribute (fn/hash-get el 'unid) (subset term 1)))
+                (eq char '-)
+                  (filter data el (not (typHasAttribute (fn/hash-get el 'unid) (subset term 1))))
+                (filter data el (strFind (fn/eval (fn/hash-get el 'title)) term))
+              )
+            )
+            data
+          )
+        )))
+
+        ;; add ships
+        (dsf/list-data (fn/list-map (typFind "s") unid
+          (list
+            (list 'title      (typGetDataField unid 'name))
+            (list 'unid       unid)
+            (list 'type       'ship)
+          )
+        ))
+
+        ;; add stations
+        (dsf/list-data (fn/list-map (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
+          (list
+            (list 'title      (typGetDataField unid 'name))
+            (list 'unid       unid)
+            (list 'type       'station)
+          )
+        ) 'append)
+
+        (dsf/action 'add "Add to Spawn List" 'A (lambda nil
+          (block (unid type pos obj)
+            ;; spawn and suspend the current type
+            ;; add data to the ship that lets
+            ;; us find it again
+            (setq unid (dsf/list-entry 'unid))
+            (setq type (dsf/list-entry 'type))
+            (setq pos (objGetPos gPlayerShip))
+            (switch
+              (eq type 'ship)
+                (block nil
+                  (setq obj (sysCreateShip unid pos &svIndependent;))
+                  (shpOrder obj 'hold)
+                )
+              (eq type 'station)
+                (block nil
+                  (setq obj (sysCreateStation unid pos))
+                  (objSuspend obj)
+                )
+            )
+            (if obj (block nil
+              (objSetData obj "GODSpawn" true)
+              (objSetData obj "GODSpawnTeam" "Neutral")
+            ))
+            (dsf/description "Added to spawn list")
+          )
+        ))
+        (dsf/no-save 'add true)
+
+        (dsf/action 'spawn-list "Back to Spawn List" 'B (lambda nil
+          (god/spawn-list)
+        ))
+        (dsf/no-save 'spawn-list true)
+
+        (dsf/no-back true)
+        (dsf/show-screen)
+      )
+    ))
+
+
+
+
+
+    ;; build discrete screens to handle the various display tasks independantly
+    (setq dsf/space-object-browser (lambda nil
+      (block nil
+        (dsf/screen 'space-object-browser "Browser Space Objects")
+
+        ;; Things to consider:
+        ;;
+        ;; - Objects should stack, but it should also be
+        ;;   possible to split stacks
+
+        ;; Spawn List Screen
+        ;; - Filter
+        ;; - Add Object
+        ;; - Remove Object
+        ;; - Modify Object
+        ;; - Back
+        ;; - Exit
+
+        ;; Add Object Screen
+        ;; - Add to Spawn (select count first)
+        ;; - Set Sovereign and Squadron
+
+        ;; Modify Object Screen
+        ;; - Set Team (either toggle or show team screen)
+        ;; - Set Orders (only for ships)
+        ;; - Change Loudout
+
+
+      )
+    ))
+
+    ;; sovereigns.
+    ;; Try to add staticdata to them that we can use in the
+    ;; screens. This means we would not need to hardcode as
+    ;; much information in several places.
+
+    )
+  </Globals>
+
+  <Sovereign UNID="&svGODRed;"
+    name="Red Team"
+    alignment="neutral"
+    >
+    <Relationships>
+      <Relationship sovereign="&svGODBlue;"  disposition="enemy" mutual="true" />
+      <Relationship sovereign="&svGODGreen;" disposition="enemy" mutual="true" />
+    </Relationships>
+    <StaticData>
+      <TeamName>Red Team</TeamName>
+      <TeamID>red</TeamID>
+      <Description>...</Description>
+    </StaticData>
+  </Sovereign>
+
+  <Sovereign UNID="&svGODBlue;"
+    name="Blue Team"
+    alignment="neutral"
+    >
+    <Relationships>
+      <Relationship sovereign="&svGODRed;"   disposition="enemy" mutual="true" />
+      <Relationship sovereign="&svGODGreen;" disposition="enemy" mutual="true" />
+    </Relationships>
+    <StaticData>
+      <TeamName>Blue Team</TeamName>
+      <TeamID>blue</TeamID>
+      <Description>...</Description>
+    </StaticData>
+  </Sovereign>
+
+  <Sovereign UNID="&svGODGreen;"
+    name="Green Team"
+    alignment="neutral"
+    >
+    <Relationships>
+      <Relationship sovereign="&svGODRed;"  disposition="enemy" mutual="true" />
+      <Relationship sovereign="&svGODBlue;" disposition="enemy" mutual="true" />
+    </Relationships>
+    <StaticData>
+      <TeamName>Green Team</TeamName>
+      <TeamID>green</TeamID>
+      <Description>...</Description>
+    </StaticData>
+  </Sovereign>
+
+</TranscendenceExtension>
+<!--
+vim:ts=2:sw=2:sts=2:ft=tscript:
+-->
+
