@@ -134,7 +134,7 @@
   (lnkAppend god/modules '(
     (weight       3)
     (title        "Browse Items")
-    (subtitle     "...")
+    (subtitle     "Browse and search all items in game. Add some to your cargo hold, or install them directly")
     (on-select    (block nil
       (dsf/action 'select "Select" 'S (lambda nil (block nil
         (dsf/screen 'item-browser "Item Browser")
@@ -172,6 +172,19 @@
         )
       ))
       (dsf/no-save 'add-to-cargo true)
+      (dsf/disable-action 'add-to-cargo (lambda nil (not (dsf/item))))
+
+      (dsf/action 'install "Install Item" 'N (lambda nil
+        (block (itm result)
+          (setq itm (dsf/item))
+          (setq result (god/install-item itm nil nil dsf/player-ship))
+          (dsf/description (item result 1))
+        )
+      ))
+      (dsf/no-save 'install true)
+      (dsf/disable-action 'install (lambda nil
+        (or (not (dsf/item)) (not (itmMatches (dsf/item) "d")))
+      ))
 
       (dsf/action 'identify-single "Identify Current Item" 'C (lambda nil
         (block (itm)
@@ -183,6 +196,7 @@
         )
       ))
       (dsf/no-save 'identify-single true)
+      (dsf/disable-action 'identify-single (lambda nil (not (dsf/item))))
 
       (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
         (block nil
@@ -195,6 +209,7 @@
         )
       ))
       (dsf/no-save 'identify-all true)
+      (dsf/disable-action 'identify-all (lambda nil (not (dsf/item))))
     )
   ))
 
@@ -316,14 +331,16 @@
         (dsf/description (item result 1))
       )))
       (dsf/no-save 'force true)
+      (dsf/disable-action 'force (lambda nil (not (dsf/item))))
 
       (dsf/action 'normal "Normal Install" 'N (lambda nil (block (result)
         (setq result (god/install-item (dsf/item) true true))
         (dsf/description (item result 1))
       )))
       (dsf/no-save 'normal true)
+      (dsf/disable-action 'normal (lambda nil (not (dsf/item))))
 
-      (dsf/action 'add "Add Devices" 'A (lambda nil (block nil
+      (dsf/action 'add "Add More Devices" 'A (lambda nil (block nil
         (dsf/screen 'device-browser "Device Browser")
         (god/item-browser "d")
         (dsf/show-screen)
