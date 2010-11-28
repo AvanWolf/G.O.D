@@ -136,15 +136,16 @@
     (title        "Browse Items")
     (subtitle     "...")
     (on-select    (block nil
-      (dsf/action 'select "Select" 'S (lambda nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (dsf/screen 'item-browser "Item Browser")
         (god/item-browser "*")
-      ))
+        (dsf/show-screen)
+      )))
     ))
   ))
 
   (setq god/item-browser (lambda (criteria)
     (block nil
-      (dsf/screen 'item-browser "Item Browser")
       (dsf/item-browser (fn/list-map (itmGetTypes criteria) itm (itmCreate itm 1)))
 
       (dsf/action 'add-to-cargo "Add to Cargo Hold" 'A (lambda nil
@@ -163,13 +164,15 @@
             (block nil
               (dsf/pane "Counter")
               (dsf/counter 1)
-              (dsf/action-label 'add-to-cargo "Finish")
-              (dsf/action-key 'add-to-cargo 'F)
+              (dsf/action-label 'add-to-cargo "Accept Transaction")
+              (dsf/action-key 'add-to-cargo 'A)
               (dsf/description (cat "Select the amount of \"" (itmGetName (dsf/item) 3) "\" you want to add to your cargo hold"))
             )
           )
         )
       ))
+      (dsf/no-save 'add-to-cargo true)
+
       (dsf/action 'identify-single "Identify Current Item" 'C (lambda nil
         (block (itm)
           (setq itm (dsf/item))
@@ -179,6 +182,8 @@
           (dsf/show-screen)
         )
       ))
+      (dsf/no-save 'identify-single true)
+
       (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
         (block nil
           (objEnumItems gPlayerShip "*U" itm (block nil
@@ -189,7 +194,7 @@
           (dsf/show-screen)
         )
       ))
-      (dsf/show-screen)
+      (dsf/no-save 'identify-all true)
     )
   ))
 
@@ -285,6 +290,47 @@
 ;      )
 ;    )
 ;  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - INSTALL DEVICE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       0)
+    (title        "Install Device")
+    (subtitle     "Install any device you have in your cargo hold. You can choose between installing it in the regular way, or forcefully")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil
+        (god/install-device))
+      )
+    ))
+  ))
+
+  (setq god/install-device (lambda nil
+    (block nil
+      (dsf/screen 'install-device "Install Device" 'itempicker-player)
+      (dsf/item-filter "dUN")
+
+      (dsf/action 'force "Force Install" 'F (lambda nil (block (result)
+        (setq result (god/install-item (dsf/item) nil true))
+        (dsf/description (item result 1))
+      )))
+      (dsf/no-save 'force true)
+
+      (dsf/action 'normal "Normal Install" 'N (lambda nil (block (result)
+        (setq result (god/install-item (dsf/item) true true))
+        (dsf/description (item result 1))
+      )))
+      (dsf/no-save 'normal true)
+
+      (dsf/action 'add "Add Devices" 'A (lambda nil (block nil
+        (dsf/screen 'device-browser "Device Browser")
+        (god/item-browser "d")
+        (dsf/show-screen)
+      )))
+      (dsf/show-screen)
+    )
+  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - TIMESTOP
@@ -442,11 +488,16 @@
   <Globals>
     (block Nil
 
-    ;; returns True or a tuple with error code and error message
-    ;; we only fail on a few of the conditions, namely those
-    ;; that can not be fixed without user input
-    ;; In other words, we always install
-    (setq god/install-item (lambda (itm normal cargo target)
+    ;; Install an item, using the normal rules, or forcefully.
+    ;; We return a tuple with an code and a message
+    ;;
+    ;; - normal
+    ;;   Use the normal rules for installing
+    ;; - cargo
+    ;;   We have the item in our cargo already
+    ;; - target
+    ;;   Which ship to install on
+    (setq god/install-item (lambda (itm normal inCargo target)
       (block (canInstall result code)
         ;; if we don't have a target, it is the player
         (if (not target) (setq target gPlayerShip))
@@ -484,30 +535,30 @@
             (setq result '(13 "Your ship cannot support any more non-weapon devices."))
           (not (eq canInstall 0))
             (setq result '(14 "This item can not be installed."))
-          (setq result '(True))
+          (setq result '(true))
         )
         ;; if result is True, then we install right away
         (setq code (item result 0))
-        (if (or (eq code True) (find '(4 5 6 8 9) code) (and (not normal) (find '(1 3) code)))
+        (if (or code (find '(4 5 6 8 9) code) (and (not normal) (find '(1 3) code)))
           (block (name)
             (setq name (itmGetName itm 1))
             (switch
               (eq code 4)
-                (setq result (list True (cat "Replaced shield generator with " name)))
+                (setq result (list true (cat "Replaced shield generator with " name)))
               (eq code 5)
-                (setq result (list True (cat "Replaced propulsion system with " name)))
+                (setq result (list true (cat "Replaced propulsion system with " name)))
               (eq code 6)
                 (block Nil
                   (shpRemoveDevice target (item (objGetItems target "Il") 0))
-                  (setq result (list True (cat "Replaced missile launcher with " name)))
+                  (setq result (list true (cat "Replaced missile launcher with " name)))
                 )
               (eq code 8)
-                (setq result (list True (cat "Replaced current cargo expansion with " name)))
+                (setq result (list true (cat "Replaced current cargo expansion with " name)))
               (eq code 9)
-                (setq result (list True (cat "Replaced reactor with " name)))
-              (setq result (list True (cat "Installed " name)))
+                (setq result (list true (cat "Replaced reactor with " name)))
+              (setq result (list true (cat "Installed " name)))
             )
-            (if (not cargo) (objAddItem target itm))
+            (if (not inCargo) (objAddItem target itm))
             (shpInstallDevice target itm)
           )
         )
