@@ -17,7 +17,7 @@
     (block (module)
 
     (setq module (list
-      '((weight       0)
+      '((weight       4)
         (title        "Space Objects")
         (subtitle     "...")
         (on-select    (block nil
