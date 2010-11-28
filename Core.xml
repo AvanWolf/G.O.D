@@ -309,7 +309,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       0)
+    (weight       5)
     (title        "Install Device")
     (subtitle     "Install any device you have in your cargo hold. You can choose between installing it in the regular way, or forcefully")
     (on-select    (block nil
@@ -345,6 +345,114 @@
       )))
       (dsf/show-screen)
     )
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - REMOVE DEVICE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       5)
+    (title        "Remove Device")
+    (subtitle     "Remove any device you have installed on your ship")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (setq gPrevScreen (-dsf/get-screen-unid))
+        (setq gPrevPane "Default")
+        (setq gMargin 0)
+        (scrShowScreen gScreen "&dsRemoveDevice;")
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - REPAIR / REPLACE ARMOR
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       5)
+    (title        "Repair or Replace Armor")
+    (subtitle     "Fix up your armor, or replace segments")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (setq gPrevScreen (-dsf/get-screen-unid))
+        (setq gPrevPane "Default")
+        (setq gTechLevel 15)
+        (setq gArmorSegment 0)
+        (setq gMargin 0)
+        (scrShowScreen gScreen "&dsRepairArmor;")
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - REPAIR ITEM
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       0)
+    (title        "Repair Item")
+    (subtitle     "Fix any item that needs fixing")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (dsf/screen 'repair-item "Repair Item" 'itempicker-player)
+        (dsf/item-filter "*d~mUD")
+        (dsf/action 'repair "Repair" 'R (lambda nil
+          (block (itm)
+            (shpRepairItem gPlayerShip (dsf/item))
+            (dsf/description "Repaired Item")
+            ;(dsf/show-screen)
+          )
+        ))
+        (dsf/no-save 'repair true)
+        (dsf/disable-action 'repair (lambda nil (not (dsf/item))))
+        (dsf/show-screen)
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - DAMAGE ITEM
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       0)
+    (title        "Damage Item")
+    (subtitle     "Damage an item... just because")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (dsf/screen 'repair-item "Repair Item" 'itempicker-player)
+        (dsf/item-filter "*d~mUN")
+        (dsf/action 'repair "Damage" 'D (lambda nil
+          (block (itm)
+            (shpDamageItem gPlayerShip (dsf/item))
+            (dsf/description "Damaged Item")
+            ;(dsf/show-screen)
+          )
+        ))
+        (dsf/no-save 'repair true)
+        (dsf/disable-action 'repair (lambda nil (not (dsf/item))))
+        (dsf/show-screen)
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - MAP SYSTEM
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       5)
+    (title        "Map System")
+    (subtitle     "Reveal location on map of every station in the current system")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (enum (sysFindObject gSource "Ts") obj
+            (objSetKnown obj)
+        )
+        (dsf/description "Mapped system")
+      )))
+    ))
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
