@@ -1,0 +1,386 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleEnhancements         "0xDCBA0510">
+]>
+
+<TranscendenceExtension
+  UNID="&modGODModuleEnhancements;"
+  name="G.O.D. Module - Enhancements"
+  credits="alterecco"
+  version="1.0">
+
+  <Globals>
+    (block (module)
+
+    (setq module (list
+      '((weight     0)
+        (title      "Apply Enhancement")
+        (subtitle   "Because a +fast Ares Archcannon works!")
+        (on-select  (block nil
+          (dsf/action 'select "Select" 'S (lambda nil
+            (god/enhancement-choose)
+          ))
+        ))
+      )
+    ))
+
+    (setq god/modules (if (isError god/modules)
+      module
+      (append god/modules module)
+    ))
+
+    (setq god/enhancement-choose (lambda nil (block nil
+      (dsf/screen 'enhancement-choose "Select Type" 'custompicker)
+      (dsf/description "Choose the enhancement you want to apply")
+      (dsf/list-data (fn/list-map god/enhancement-data enhancement
+        (list
+          (list 'title      (cat (fn/hash-get enhancement 'name) ": " (fn/hash-get enhancement 'hex)))
+          (list 'subtitle   (cat "Applicable for: " (fn/hash-get enhancement 'devices) "\n\n" (fn/hash-get enhancement 'desc)))
+          (list 'hex        (fn/hash-get enhancement 'hex))
+          (list 'criteria   (fn/hash-get enhancement 'criteria))
+          (list 'type       (fn/hash-get enhancement 'type))
+        )
+      ))
+
+      (dsf/action 'select "Select" 'S (lambda nil (block (type)
+        (dsf/session 'enhancement-hex (dsf/list-entry 'hex))
+        (dsf/session 'enhancement-criteria (dsf/list-entry 'criteria))
+        (setq type (dsf/list-entry 'type))
+
+        (switch
+          (eq type 2)
+            (god/enhancement-type)
+          (eq type 1)
+            (god/enhancement-power)
+          (god/enhancement-apply)
+        )
+      )))
+      (dsf/show-screen)
+    )))
+
+    (setq god/enhancement-type (lambda nil (block nil
+      (dsf/screen 'enhancement-type "Enhancement Type" 'custompicker)
+      (dsf/description "Choose the damage type of the enhancement")
+      (dsf/list-data (fn/list-map '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) i (list
+        (list 'title      (fn/int-to-damagetype i))
+        (list 'damagetype i)
+      )))
+      (dsf/action 'select "Select" 'S (lambda nil
+        (block (damagetype hex)
+          (setq damagetype (dsf/list-entry 'damagetype))
+          (setq hex (dsf/session 'enhancement-hex))
+          (setq hex (add hex (multiply damagetype 15)))
+          (dsf/session 'enhancement-hex hex)
+          (god/enhancement-power)
+        )
+      ))
+      (dsf/no-save 'select true)
+      (dsf/hide-action 'back)
+      (dsf/show-screen)
+    )))
+
+    (setq god/enhancement-power (lambda nil (block nil
+      (dsf/screen 'enhancement-power "Enhancement Power" 'standard)
+      (dsf/description "Choose the strength of the enhancement. Can be a number from 0 to 15")
+      (dsf/pane 'Counter)
+      (dsf/action 'select 'Select 'S (lambda nil (block (pow)
+        (setq pow (dsf/counter))
+        (if (and (geq pow 0) (leq pow 15)) (block (hex)
+          (setq hex (dsf/session 'enhancement-hex))
+          (setq hex (add hex pow))
+          (dsf/session 'enhancement-hex hex)
+          (god/enhancement-apply)
+        ))
+      )))
+      (dsf/no-save 'select true)
+      (dsf/hide-action 'back)
+      (dsf/show-screen)
+    )))
+
+    (setq god/enhancement-apply (lambda nil (block nil
+      (dsf/screen 'enhancement-apply "Apply Enhancement" 'itempicker-player)
+      (dsf/description "Choose the item to apply enhancement to")
+      (dsf/item-filter (dsf/session 'enhancement-criteria))
+      (dsf/action 'select "Select" 'S (lambda nil
+        (if (dsf/data-get 'enhancement-added)
+          (god/core-screen)
+          (block (hex itm)
+            (setq hex (dsf/session 'enhancement-hex))
+            (setq itm (dsf/item))
+            (shpEnhanceItem gPlayerShip itm hex)
+            (dsf/description "Enhancement applied")
+            (dsf/action-label 'select "Back to Main")
+            (dsf/action-key 'select 'M)
+            (dsf/data-set 'enhancement-added true)
+          )
+        )
+      ))
+      (dsf/disable-action 'select (lambda nil (not (dsf/item))))
+      (dsf/no-save 'select true)
+
+      (dsf/show-screen)
+    )))
+
+    (setq god/decode-enhancement (lambda (value)
+      (block (hex selected)
+        (setq hex (multiply 16 (subtract (divide value 16) (modulo value 16))))
+        (enum god/enhancement-data enhancement
+          (if (eq (int (fn/hash-get enhancement 'hex)) hex)
+            (setq selected enhancement)
+          )
+        )
+        (if (not selected) (block nil
+          (setq hex (multiply 16 (divide value 16)))
+          (enum god/enhancement-data enhancement
+            (if (eq (int (dsf/hash-get enhancement 'hex)) hex)
+              (setq selected enhancement)
+            )
+          )
+        ))
+        selected
+      )
+    ))
+
+    (setq god/enhancement-data (list
+      '(
+        (name           "Damage Reflect")
+        (devices        "Shield")
+        (criteria       "s")
+        (hex            "0x0300")
+        (type           2)
+        (desc           "Causes damage type Y to bounce off shields with probability X.")
+      )
+      '(
+        (name           "Damage Transparency")
+        (devices        "Shield")
+        (criteria       "s")
+        (hex            "0x8300")
+        (type           2)
+        (desc           "Causes damage type Y to pass through shields with probability X.")
+      )
+      '(
+        (name           "Regeneration")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0200")
+        (type           0)
+        (desc           "More information needed..")
+      )
+      '(
+        (name           "Decay")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x8200")
+        (type           0)
+        (desc           "More information needed..")
+      )
+      '(
+        (name           "Immunity, Radiation")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0B00")
+        (type           0)
+        (desc           "Will render armor immune to radiation.")
+      )
+      '(
+        (name           "Immunity, Blinding")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0B10")
+        (type           0)
+        (desc           "Will render armor immune to blinding.")
+      )
+      '(
+        (name           "Immunity, EMP")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0B20")
+        (type           0)
+        (desc           "Will render armor immune to EMP.")
+      )
+      '(
+        (name           "Immunity, Device Damage")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0B30")
+        (type           0)
+        (desc           "Will render armor immune to Device Damage.")
+      )
+      '(
+        (name           "Immunity, Disintegration")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0B40")
+        (type           0)
+        (desc           "Will render armor immune to Disintegration.")
+      )
+      '(
+        (name           "Immunity, Blinding/EMP/Device Damage")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0C00")
+        (type           0)
+        (desc           "Will render armor immune to Blinding/EMP/Device Damage.")
+      )
+      '(
+        (name           "Interferes with Shields")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x8C00")
+        (type           0)
+        (desc           "Armor will interfere with shields.")
+      )
+      '(
+        (name           "Regenerate near Sun")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0D00")
+        (type           0)
+        (desc           "Armor will regenerate near a sun.")
+      )
+      '(
+        (name           "Refuel near Sun")
+        (devices        "Armor")
+        (criteria       "a")
+        (hex            "0x0E00")
+        (type           0)
+        (desc           "Armor will refuel ship's reactor near a sun.")
+      )
+      '(
+        (name           "Damage / Hit Point Bonus")
+        (devices        "Weapon, Shield, Armor")
+        (criteria       "was")
+        (hex            "0x0100")
+        (type           1)
+        (desc           "Will increase damage output or hitpoints from 10 to 150 percent.")
+      )
+      '(
+        (name           "Damage / Hit Point Penalty")
+        (devices        "Weapon, Shield, Armor")
+        (criteria       "was")
+        (hex            "0x8100")
+        (type           1)
+        (desc           "Will decrease damage output or hitpoints from 10 to 150 percent.")
+      )
+      '(
+        (name           "Speed Increase")
+        (devices        "Weapon")
+        (criteria       "w")
+        (hex            "0x1000")
+        (type           1)
+        (desc           "Will increase a weapons rate of fire from 10 to 150%.")
+      )
+      '(
+        (name           "Speed Decrease")
+        (devices        "Weapon")
+        (criteria       "w")
+        (hex            "0x9000")
+        (type           1)
+        (desc           "Will decrease a weapons rate of fire from 10 to 150%.")
+      )
+      '(
+        (name           "Damage Reduction, Energy")
+        (devices        "Shield, Armor")
+        (criteria       "sa")
+        (hex            "0x0600")
+        (type           1)
+        (desc           "More information needed.")
+      )
+      '(
+        (name           "Damage Reduction, Matter")
+        (devices        "Shield, Armor")
+        (criteria       "sa")
+        (hex            "0x0700")
+        (type           1)
+        (desc           "More information needed.")
+      )
+      '(
+        (name           "Damage Reduction, Special I")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x0800")
+        (type           2)
+        (desc           "Reduce damage of type Y and Y+1. More information needed.")
+      )
+      '(
+        (name           "Damage Reduction, Special II")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x0900")
+        (type           2)
+        (desc           "Reduce damage of type Y. More information needed.")
+      )
+      '(
+        (name           "Damage Reduction, Special III")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x0A00")
+        (type           2)
+        (desc           "Reduce damage of type Y and Y+2 with 1.5*X. More information needed.")
+      )
+      '(
+        (name           "Damage Increase, Energy")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x8600")
+        (type           1)
+        (desc           "More information needed.")
+      )
+      '(
+        (name           "Damage Increase, Matter")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x8700")
+        (type           1)
+        (desc           "More information needed.")
+      )
+      '(
+        (name           "Damage Increase, Special I")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x8800")
+        (type           2)
+        (desc           "Increase damage of type Y and Y+1. More information needed.")
+      )
+      '(
+        (name           "Damage Increase, Special II")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x8900")
+        (type           2)
+        (desc           "Increase damage of type Y. More information needed.")
+      )
+      '(
+        (name           "Damage Increase, Special III")
+        (devices        "Shield, Armor, (Weapon?)")
+        (criteria       "wsa")
+        (hex            "0x8A00")
+        (type           2)
+        (desc           "Increase damage of type Y and Y+2 with 1.5*X. More information needed.")
+      )
+      '(
+        (name           "Efficiency")
+        (devices        "Shield, Weapon")
+        (criteria       "ws")
+        (hex            "0x0F00")
+        (type           1)
+        (desc           "Lowers power consumption. Effect of higher X unknown. More information needed.")
+      )
+      '(
+        (name           "Decrease Efficiency")
+        (devices        "Shield, Weapon")
+        (criteria       "ws")
+        (hex            "0x8F00")
+        (type           1)
+        (desc           "Increase power consumption. Effect of higher X unknown. More information needed.")
+      )
+    ))
+
+    )
+  </Globals>
+</TranscendenceExtension>
+<!--
+vim:ts=2:sw=2:sts=2:ft=tscript:
+-->
+
