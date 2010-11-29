@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <!DOCTYPE TranscendenceExtension
 [
-    <!ENTITY modGODModuleObjectSpawn        "0xDCBA0510">
-    <!ENTITY svGODRed                       "0xDCBA0511">
-    <!ENTITY svGODBlue                      "0xDCBA0512">
-    <!ENTITY svGODGreen                     "0xDCBA0513">
+    <!ENTITY modGODModuleObjectSpawn        "0xDCBA0520">
+    <!ENTITY svGODRed                       "0xDCBA0521">
+    <!ENTITY svGODBlue                      "0xDCBA0522">
+    <!ENTITY svGODGreen                     "0xDCBA0523">
 ]>
 
 <TranscendenceExtension
