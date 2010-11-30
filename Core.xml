@@ -547,7 +547,7 @@
   (lnkAppend god/modules '(
     (weight       6)
     (title        "Banking - Withdraw Credits")
-    (subtitle     "Remove credits to your account")
+    (subtitle     "Remove credits from your account")
     (on-select    (block nil
       (dsf/action 'select "Select" 'S (lambda nil (block (mx)
         (setq mx (plyGetCredits gPlayer))
@@ -560,6 +560,60 @@
           (block nil
             (dsf/pane 'Counter)
             (dsf/description (cat "Select the amount of credits you want to remove (max " mx ")"))
+          )
+        )
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - BANKING DEPOSIT RINS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Banking - Deposit Rins")
+    (subtitle     "Add rins to your account")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block (rins)
+        (setq rins (or (objGetData gPlayerShip 'rins) 0))
+        (if (eq (dsf/pane) 'Counter)
+          (block (credit)
+            (setq rins (add rins (setq credit (fn/constrain (dsf/counter) 0 10000000))))
+            (objSetData gPlayerShip 'rins rins)
+            (dsf/pane 'Default)
+            (dsf/description (cat "Added " credit " rins to your account. You now have " rins " rins"))
+          )
+          (block nil
+            (dsf/pane 'Counter)
+            (dsf/description (cat "You have " rins " rins. How many do you want to add (max 10000000)"))
+          )
+        )
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - BANKING WITHDRAW RINS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Banking - Withdraw Rins")
+    (subtitle     "Remove rins from your account")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block (rins)
+        (setq rins (objGetData gPlayerShip 'rins))
+        (if (eq (dsf/pane) 'Counter)
+          (block (credit)
+            (setq rins (subtract rins (setq credit (fn/constrain (dsf/counter) 0 rins))))
+            (objSetData gPlayerShip 'rins rins)
+            (dsf/pane 'Default)
+            (dsf/description (cat "Withdraw " credit " rins from your account. You now have " rins " rins"))
+          )
+          (block nil
+            (dsf/pane 'Counter)
+            (dsf/description (cat "Select the amount of rins you want to remove (max " rins ")"))
           )
         )
       )))
