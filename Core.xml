@@ -456,6 +456,41 @@
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - LOOT ALL
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Loot All")
+    (subtitle     "Loot all items in wrecks within a certain radius in ls\n(Note: this does not respect your cargo limit)")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (if (eq (dsf/pane) 'Counter)
+          (block (radius criteria wrecks (cnt 0))
+            (setq radius (fn/constrain (dsf/counter) 0 1000))
+            (dbgLog radius)
+            (setq criteria (cat "sTN:" radius))
+            (setq wrecks (filter (sysFindObject gPlayerShip criteria) obj
+              (or (objHasAttribute obj "shipwreck") (eq (objGetVisibleDamage obj) 100) (strFind (objGetName obj) "wreck"))
+            ))
+            (dbgLog wrecks)
+            (enum wrecks obj (objEnumItems obj "*U" itm (block nil
+              (setq cnt (add cnt 1))
+              (objRemoveItem obj itm)
+              (objAddItem gPlayerShip itm)
+            )))
+            (dsf/description (cat "Looted " (fn/plural cnt "item" "items" true)))
+          )
+          (block nil
+            (dsf/pane 'Counter)
+            (dsf/description "Enter the ls you want to set as radius. Upper limit is 1000")
+          )
+        )
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - TIMESTOP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
