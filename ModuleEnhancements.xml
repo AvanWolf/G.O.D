@@ -16,10 +16,42 @@
     (setq module (list
       '((weight     0)
         (title      "Apply Enhancement")
-        (subtitle   "Because a +fast Ares Archcannon works!")
+        (subtitle   "Because a +fast Ares Archcannon works wonders!")
         (on-select  (block nil
           (dsf/action 'select "Select" 'S (lambda nil
-            (god/enhancement-choose)
+            (god/enhance-item)
+          ))
+        ))
+      )
+      '((weight       0)
+        (title        "Analyze Enhancement")
+        (subtitle     "Find out just what is going on with your enhancement")
+        (on-select    (block nil
+          (dsf/action 'select "Select" 'S (lambda nil
+            (block nil
+              (dsf/screen 'analyze-enhancement "Analyze Enhancement" 'itempicker-player)
+              (dsf/item-filter "swa")
+
+              (dsf/on-pane-initialize (lambda nil (block (itm hex)
+                (setq itm (dsf/item))
+                (if (and itm (setq hex (itmIsEnhanced itm)))
+                  (block (data type)
+                    (setq data (god/decode-enhancement hex))
+                    (setq type (fn/hash-get data 'type))
+                    (dsf/description (cat "Type: " (fn/hash-get data 'name) " [" (fn/hash-get data 'hex) "]\n"))
+                    (if (eq type 2)
+                      (dsf/description (cat "Damage Type: " (fn/int-to-damagetype (modulo (divide hex 16) 16)) "\n") 'append)
+                    )
+                    (if (or (eq type 2) (eq type 1))
+                      (dsf/description (cat "Power: " (modulo hex 16) "\n") 'append)
+                    )
+                  )
+                  (dsf/description "Item is not enhanced")
+                )
+              )))
+
+              (dsf/show-screen)
+            )
           ))
         ))
       )
@@ -30,22 +62,43 @@
       (append god/modules module)
     ))
 
-    (setq god/enhancement-choose (lambda nil (block nil
-      (dsf/screen 'enhancement-choose "Select Type" 'custompicker)
+    (setq god/enhance-item (lambda nil (block nil
+      (dsf/screen 'enhance-item "Enhance Item" 'itempicker-player)
+      (dsf/description "Select an item you want to enhance")
+      (dsf/item-filter "swa")
+
+      (dsf/action 'select "Select" 'S (lambda nil (block (itm criteria)
+        (setq itm (dsf/item))
+        (dsf/session 'enhancement-item itm)
+        (setq criteria (fn/int-to-criteria (itmGetCategory itm)))
+        (if (eq criteria "l") (setq criteria "w"))
+        (dsf/session 'enhancement-criteria criteria)
+        (dsf/session 'enhancement-object gPlayerShip)
+        (god/enhancement-choose)
+      )))
+      (dsf/disable-action 'select (lambda nil (not (dsf/item))))
+      (dsf/no-save 'select true)
+
+      (dsf/show-screen)
+    )))
+
+    (setq god/enhancement-choose (lambda nil (block (type)
+      (dsf/screen 'enhancement-choose "Select Enhancement" 'custompicker)
       (dsf/description "Choose the enhancement you want to apply")
-      (dsf/list-data (fn/list-map god/enhancement-data enhancement
+
+      (setq criteria (dsf/session-remove 'enhancement-criteria))
+      (dsf/list-data (fn/list-map
+        (filter god/enhancement-data e (find (fn/hash-get e 'criteria) criteria)) e
         (list
-          (list 'title      (cat (fn/hash-get enhancement 'name) ": " (fn/hash-get enhancement 'hex)))
-          (list 'subtitle   (cat "Applicable for: " (fn/hash-get enhancement 'devices) "\n\n" (fn/hash-get enhancement 'desc)))
-          (list 'hex        (fn/hash-get enhancement 'hex))
-          (list 'criteria   (fn/hash-get enhancement 'criteria))
-          (list 'type       (fn/hash-get enhancement 'type))
+          (list 'title      (cat (fn/hash-get e 'name) ": " (fn/hash-get e 'hex)))
+          (list 'subtitle   (cat "Applicable for: " (fn/hash-get e 'devices) "\n\n" (fn/hash-get e 'desc)))
+          (list 'hex        (fn/hash-get e 'hex))
+          (list 'type       (fn/hash-get e 'type))
         )
       ))
 
       (dsf/action 'select "Select" 'S (lambda nil (block (type)
         (dsf/session 'enhancement-hex (dsf/list-entry 'hex))
-        (dsf/session 'enhancement-criteria (dsf/list-entry 'criteria))
         (setq type (dsf/list-entry 'type))
 
         (switch
@@ -56,16 +109,21 @@
           (god/enhancement-apply)
         )
       )))
+      (dsf/no-save 'select true)
+
+      (dsf/no-back true)
       (dsf/show-screen)
     )))
 
     (setq god/enhancement-type (lambda nil (block nil
-      (dsf/screen 'enhancement-type "Enhancement Type" 'custompicker)
+      (dsf/screen 'enhancement-type "Enhancement Damage Type" 'custompicker)
       (dsf/description "Choose the damage type of the enhancement")
-      (dsf/list-data (fn/list-map '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15) i (list
+
+      (dsf/list-data (fn/list-map (fn/range 0 15) i (list
         (list 'title      (fn/int-to-damagetype i))
         (list 'damagetype i)
       )))
+
       (dsf/action 'select "Select" 'S (lambda nil
         (block (damagetype hex)
           (setq damagetype (dsf/list-entry 'damagetype))
@@ -76,14 +134,16 @@
         )
       ))
       (dsf/no-save 'select true)
-      (dsf/hide-action 'back)
+
+      (dsf/no-back true)
       (dsf/show-screen)
     )))
 
     (setq god/enhancement-power (lambda nil (block nil
       (dsf/screen 'enhancement-power "Enhancement Power" 'standard)
-      (dsf/description "Choose the strength of the enhancement. Can be a number from 0 to 15")
+      (dsf/description "Choose the power of the enhancement. Can be a number from 0 to 15")
       (dsf/pane 'Counter)
+
       (dsf/action 'select 'Select 'S (lambda nil (block (pow)
         (setq pow (dsf/counter))
         (if (and (geq pow 0) (leq pow 15)) (block (hex)
@@ -94,31 +154,34 @@
         ))
       )))
       (dsf/no-save 'select true)
-      (dsf/hide-action 'back)
+
+      (dsf/no-back true)
       (dsf/show-screen)
     )))
 
     (setq god/enhancement-apply (lambda nil (block nil
-      (dsf/screen 'enhancement-apply "Apply Enhancement" 'itempicker-player)
-      (dsf/description "Choose the item to apply enhancement to")
-      (dsf/item-filter (dsf/session 'enhancement-criteria))
-      (dsf/action 'select "Select" 'S (lambda nil
-        (if (dsf/data-get 'enhancement-added)
-          (god/core-screen)
-          (block (hex itm)
-            (setq hex (dsf/session 'enhancement-hex))
-            (setq itm (dsf/item))
-            (shpEnhanceItem gPlayerShip itm hex)
-            (dsf/description "Enhancement applied")
-            (dsf/action-label 'select "Back to Main")
-            (dsf/action-key 'select 'M)
-            (dsf/data-set 'enhancement-added true)
-          )
+      (dsf/screen 'enhancement-apply "Apply Enhancement")
+      (dsf/on-init (lambda nil (block (hex itm obj)
+        (setq hex (dsf/session-remove 'enhancement-hex))
+        (setq itm (dsf/session-remove 'enhancement-item))
+        (setq obj (dsf/session-remove 'enhancement-object))
+        (if (shpEnhanceItem obj itm hex)
+          (dsf/description "Enhancement applied")
+          (dsf/description "An error ocurred. Please contact your local administrator")
         )
-      ))
-      (dsf/disable-action 'select (lambda nil (not (dsf/item))))
-      (dsf/no-save 'select true)
+      )))
 
+      (dsf/action 'more "Enhance More" 'E (lambda nil
+        (god/enhance-item)
+      ))
+      (dsf/no-save 'more true)
+
+      (dsf/action 'return "Return to Main" 'R (lambda nil
+        (god/core-screen)
+      ))
+      (dsf/no-save 'return true)
+
+      (dsf/no-back true)
       (dsf/show-screen)
     )))
 
@@ -133,7 +196,7 @@
         (if (not selected) (block nil
           (setq hex (multiply 16 (divide value 16)))
           (enum god/enhancement-data enhancement
-            (if (eq (int (dsf/hash-get enhancement 'hex)) hex)
+            (if (eq (int (fn/hash-get enhancement 'hex)) hex)
               (setq selected enhancement)
             )
           )
