@@ -478,6 +478,7 @@
               (objAddItem gPlayerShip itm)
             )))
             (enum wrecks obj (if (objIsShip obj) (objDestroy obj)))
+            (dsf/pane 'Default)
             (dsf/description (cat "Looted " (fn/plural cnt "item" "items" true)))
           )
           (block nil
@@ -509,6 +510,57 @@
             (dsf/description "Jettisoned all items")
           )
           (dsf/description "You have no items onboard to jettison")
+        )
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - BANKING DEPOSIT CREDITS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Banking - Deposit Credits")
+    (subtitle     "Add credits to your account")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (if (eq (dsf/pane) 'Counter)
+          (block (credits)
+            (plyCredit gPlayer (setq credits (fn/constrain (dsf/counter) 0 10000000)))
+            (dsf/pane 'Default)
+            (dsf/description (cat "Added " credits " credits to your account"))
+          )
+          (block nil
+            (dsf/pane 'Counter)
+            (dsf/description "Select the amount of credits you want (max 10000000)")
+          )
+        )
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - BANKING WITHDRAW CREDITS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Banking - Withdraw Credits")
+    (subtitle     "Remove credits to your account")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block (mx)
+        (setq mx (plyGetCredits gPlayer))
+        (if (eq (dsf/pane) 'Counter)
+          (block (credits)
+            (plyCharge gPlayer (setq credits (fn/constrain (dsf/counter) 0 mx)))
+            (dsf/pane 'Default)
+            (dsf/description (cat "Withdrew " credits " credits from your account"))
+          )
+          (block nil
+            (dsf/pane 'Counter)
+            (dsf/description (cat "Select the amount of credits you want to remove (max " mx ")"))
+          )
         )
       )))
     ))
