@@ -490,6 +490,31 @@
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - JETTISON ALL
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Jettison All")
+    (subtitle     "Jettison all items in your hold")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block (items)
+        (if (setq items (objGetItems gPlayerShip "*U"))
+          (block (dest)
+            (setq dest (sysCreateStation &stCargoCrate; (sysVectorPolarOffset gPlayerShip 0 2)))
+            (enum items itm (block nil
+              (objRemoveItem gPlayerShip itm)
+              (objAddItem dest itm)
+            ))
+            (dsf/description "Jettisoned all items")
+          )
+          (dsf/description "You have no items onboard to jettison")
+        )
+      )))
+    ))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - TIMESTOP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
