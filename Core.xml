@@ -753,9 +753,9 @@
     >
     <Events>
       <OnGlobalPlayerEnteredSystem>
-        (block Nil
-          (if (not (objHasItem gPlayerShip (itmCreate &itGODCoreHook; 1)))
-            (objAddItem gPlayerShip (itmCreate &itGODCoreHook; 1))
+        (block (itm)
+          (if (not (objHasItem gPlayerShip (setq itm (itmCreate &itGODCoreHook; 1))))
+            (objAddItem gPlayerShip itm)
           )
         )
       </OnGlobalPlayerEnteredSystem>
