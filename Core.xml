@@ -341,6 +341,12 @@
     (weight       0)
     (title        "Repair Item")
     (subtitle     "Fix any item that needs fixing")
+    (hide         (block ((do-hide true))
+      (objEnumItems gPlayerShip itm
+        (if (itmIsDamaged itm) (setq do-hide nil))
+      )
+      do-hide
+    ))
     (on-select    (block nil
       (dsf/action 'select "Select" 'S (lambda nil (block nil
         (dsf/screen 'repair-item "Repair Item" 'itempicker-player)
