@@ -26,6 +26,12 @@
       '((weight       0)
         (title        "Analyze Enhancement")
         (subtitle     "Find out just what is going on with your enhancement")
+        (hide         (block ((do-hide true))
+          (objEnumItems gPlayerShip itm
+            (if (itmIsEnhanced itm) (setq do-hide nil))
+          )
+          do-hide
+        ))
         (on-select    (block nil
           (dsf/action 'select "Select" 'S (lambda nil
             (block nil
