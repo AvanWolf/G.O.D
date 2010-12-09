@@ -730,6 +730,49 @@
   <Globals>
     (block Nil
 
+    (setq god/refuel-player (lambda nil
+      ;; pump it full of Longzhu's
+      (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
+    ))
+
+    (setq god/restore-target (lambda (target)
+      (block nil
+
+        (if (objIsShip target) (block nil
+          ;; fix states
+          (objFixParalysis target)
+          (shpFixBlindness target)
+          (shpDecontaminate target)
+
+          ;; repair shields
+          (shpRechargeShield target 99999999)
+
+          ; repair all items/devices
+          (objEnumItems target "*~a D" itm (shpRepairItem target itm))
+
+          ;; refuel
+          (if (eq gPlayerShip target) (block nil
+            (god/refuel-player)
+
+            ;; fix domina and ranks
+            (typSetGlobalData &stDomina; "lastInvokeTime1" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime2" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime3" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime4" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime5" 0)
+            (typSetGlobalData &stDomina; "lastInvokeTime6" 0)
+
+          ))
+        ))
+
+        ;; repair armor
+        (objEnumItems target "a" armor
+          (objRepairArmor target armor)
+        )
+
+      )
+    ))
+
     ;; Install an item, using the normal rules, or forcefully.
     ;; We return a tuple with an code and a message
     ;;
