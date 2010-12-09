@@ -53,18 +53,13 @@
     ))
   ))
 
-  (setq god/refuel-player (lambda nil
-    ;; pump it full of Longzhu's
-    (shpRefuelFromItem gPlayerShip (itmCreate &itLongzhuSphere; 2000))
-  ))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - RESTORE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
     (weight       1)
-    (title        "Restore")
+    (title        "Restore Player")
     (subtitle     (cat
       "Restore a target completely.\n"
       "Refuel, fix damage/items, remove negative states, "
@@ -73,58 +68,11 @@
       "Credits for this function goes to PM from Transcendence Forums!"
     ))
     (on-select    (block nil
-      (dsf/action 'player "Restore Player" 'P
-        (lambda nil (block nil
-          (god/restore-target gPlayerShip)
-          (dsf/description "Restored your ship")
-        ))
-      )
-      (dsf/action 'target "Restore Target" 'T
-        (lambda nil (block nil
-          (god/restore-target (objGetTarget gPlayerShip))
-          (dsf/description "Restored your current target")
-        ))
-      )
-      (dsf/disable-action 'target (not (objGetTarget gPlayerShip)))
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (god/restore-target gPlayerShip)
+        (dsf/description "Restored your ship")
+      )))
     ))
-  ))
-
-  (setq god/restore-target (lambda (target)
-    (block nil
-
-      (if (objIsShip target) (block nil
-        ;; fix states
-        (objFixParalysis target)
-        (shpFixBlindness target)
-        (shpDecontaminate target)
-
-        ;; repair shields
-        (shpRechargeShield target 99999999)
-
-        ; repair all items/devices
-        (objEnumItems target "*~a D" itm (shpRepairItem target itm))
-
-        ;; refuel
-        (if (eq gPlayerShip target) (block nil
-          (god/refuel-player)
-
-          ;; fix domina and ranks
-          (typSetGlobalData &stDomina; "lastInvokeTime1" 0)
-          (typSetGlobalData &stDomina; "lastInvokeTime2" 0)
-          (typSetGlobalData &stDomina; "lastInvokeTime3" 0)
-          (typSetGlobalData &stDomina; "lastInvokeTime4" 0)
-          (typSetGlobalData &stDomina; "lastInvokeTime5" 0)
-          (typSetGlobalData &stDomina; "lastInvokeTime6" 0)
-
-        ))
-      ))
-
-      ;; repair armor
-      (objEnumItems target "a" armor
-        (objRepairArmor target armor)
-      )
-
-    )
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
