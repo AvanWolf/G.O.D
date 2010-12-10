@@ -174,7 +174,6 @@
                 (data (list)))
 
           (dsf/screen 'travel-galaxy "Travel Galaxy")
-          (dsf/filter-screen)
 
           ;; TODO: build a much more advanced system list (in correct order)
           ;; sort by level
@@ -200,6 +199,7 @@
           )))
           (dsf/disable-action 'gate (lambda nil (not (dsf/list-entry))))
 
+          (dsf/filter-screen)
           (dsf/show-screen)
         )
       ))
@@ -607,7 +607,6 @@
 
   (setq god/core-screen (lambda nil (block (modules)
     (dsf/screen 'god-core "G.O.D" 'custompicker)
-    (dsf/filter-screen)
     (dsf/no-back true)
 
     ;; sort list by weight
@@ -629,6 +628,7 @@
       ))
     )))
 
+    (dsf/filter-screen)
     (dsf/show-screen)
   )))
 

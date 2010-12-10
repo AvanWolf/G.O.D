@@ -39,7 +39,6 @@
       (block (spawn (data (list)))
 
         (dsf/screen 'spawn-list "Spawn List")
-        (dsf/filter-screen)
 
         (setq spawn (sysFindObject nil "st D:GODSpawn"))
 
@@ -61,6 +60,7 @@
           )
         ))
 
+        (dsf/filter-screen)
         (dsf/show-screen)
       )
     ))
@@ -69,23 +69,6 @@
       (block (list-fn)
 
         (dsf/screen 'type-spawn-browser "Spawn Types")
-        ;; add a nice filter function
-        ;; document that attributes can be filtered with +/-
-        (dsf/filter-screen (lambda (data) (block (term)
-          (if (setq term (dsf/data-get 'filter-term))
-            (block (char)
-              (setq char (subset term 0 1))
-              (switch
-                (eq char '+)
-                  (filter data el (typHasAttribute (fn/hash-get el 'unid) (subset term 1)))
-                (eq char '-)
-                  (filter data el (not (typHasAttribute (fn/hash-get el 'unid) (subset term 1))))
-                (filter data el (strFind (fn/eval (fn/hash-get el 'title)) term))
-              )
-            )
-            data
-          )
-        )))
 
         ;; add ships
         (dsf/list-data (fn/list-map (typFind "s") unid
@@ -140,6 +123,24 @@
         (dsf/no-save 'spawn-list true)
 
         (dsf/no-back true)
+
+        ;; add a nice filter function
+        ;; document that attributes can be filtered with +/-
+        (dsf/filter-screen (lambda (data) (block (term)
+          (if (setq term (dsf/data-get 'filter-term))
+            (block (char)
+              (setq char (subset term 0 1))
+              (switch
+                (eq char '+)
+                  (filter data el (typHasAttribute (fn/hash-get el 'unid) (subset term 1)))
+                (eq char '-)
+                  (filter data el (not (typHasAttribute (fn/hash-get el 'unid) (subset term 1))))
+                (filter data el (strFind (fn/eval (fn/hash-get el 'title)) term))
+              )
+            )
+            data
+          )
+        )))
         (dsf/show-screen)
       )
     ))
