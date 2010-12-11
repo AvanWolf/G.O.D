@@ -92,73 +92,6 @@
     ))
   ))
 
-  (setq god/item-browser (lambda (criteria)
-    (block nil
-      (dsf/item-browser (fn/list-map (itmGetTypes criteria) itm (itmCreate itm 1)))
-
-      (dsf/action 'add-to-cargo "Add to Cargo Hold" 'A (lambda nil
-        (block nil
-          (if (eq (dsf/pane) "Counter")
-            (block (cnt itm inventory)
-              ;; add item
-              (setq cnt (dsf/counter))
-              (setq itm (itmCreate (itmGetUNID (dsf/item)) cnt))
-              (objAddItem dsf/player-ship itm)
-              (dsf/pane "Default")
-              (dsf/action-label 'add-to-cargo "Add to Cargo Hold")
-              (dsf/action-key 'add-to-cargo 'A)
-              (dsf/description "Your request has been fulfilled")
-            )
-            (block nil
-              (dsf/pane "Counter")
-              (dsf/counter 1)
-              (dsf/action-label 'add-to-cargo "Accept Transaction")
-              (dsf/action-key 'add-to-cargo 'A)
-              (dsf/description (cat "Select the amount of \"" (itmGetName (dsf/item) 3) "\" you want to add to your cargo hold"))
-            )
-          )
-        )
-      ))
-      (dsf/no-save 'add-to-cargo true)
-      (dsf/disable-action 'add-to-cargo (lambda nil (not (dsf/item))))
-
-      (dsf/action 'install "Install Item" 'N (lambda nil
-        (block (itm result)
-          (setq itm (dsf/item))
-          (setq result (god/install-item itm nil nil dsf/player-ship))
-          (dsf/description (item result 1))
-        )
-      ))
-      (dsf/no-save 'install true)
-      (dsf/disable-action 'install (lambda nil
-        (or (not (dsf/item)) (not (itmMatches (dsf/item) "d")))
-      ))
-
-      (dsf/action 'identify-single "Identify Current Item" 'C (lambda nil
-        (block (itm)
-          (setq itm (dsf/item))
-          (itmSetReference itm)
-          (itmSetKnown itm)
-          (dsf/description "Identified item")
-        )
-      ))
-      (dsf/no-save 'identify-single true)
-      (dsf/disable-action 'identify-single (lambda nil (not (dsf/item))))
-
-      (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
-        (block nil
-          (objEnumItems gPlayerShip "*U" itm (block nil
-            (itmSetReference itm)
-            (itmSetKnown itm)
-          ))
-          (dsf/description "Identified all items")
-        )
-      ))
-      (dsf/no-save 'identify-all true)
-      (dsf/disable-action 'identify-all (lambda nil (not (dsf/item))))
-    )
-  ))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - TRAVEL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -729,6 +662,74 @@
 
   <Globals>
     (block Nil
+
+    (setq god/item-browser (lambda (criteria)
+      (block nil
+        (dsf/item-browser (fn/list-map (itmGetTypes criteria) itm (itmCreate itm 1)))
+
+        (dsf/action 'add-to-cargo "Add to Cargo Hold" 'A (lambda nil
+          (block nil
+            (if (eq (dsf/pane) "Counter")
+              (block (cnt itm inventory)
+                ;; add item
+                (setq cnt (dsf/counter))
+                (setq itm (itmCreate (itmGetUNID (dsf/item)) cnt))
+                (objAddItem dsf/player-ship itm)
+                (dsf/pane "Default")
+                (dsf/action-label 'add-to-cargo "Add to Cargo Hold")
+                (dsf/action-key 'add-to-cargo 'A)
+                (dsf/description "Your request has been fulfilled")
+              )
+              (block nil
+                (dsf/pane "Counter")
+                (dsf/counter 1)
+                (dsf/action-label 'add-to-cargo "Accept Transaction")
+                (dsf/action-key 'add-to-cargo 'A)
+                (dsf/description (cat "Select the amount of \"" (itmGetName (dsf/item) 3) "\" you want to add to your cargo hold"))
+              )
+            )
+          )
+        ))
+        (dsf/no-save 'add-to-cargo true)
+        (dsf/disable-action 'add-to-cargo (lambda nil (not (dsf/item))))
+
+        (dsf/action 'install "Install Item" 'N (lambda nil
+          (block (itm result)
+            (setq itm (dsf/item))
+            (setq result (god/install-item itm nil nil dsf/player-ship))
+            (dsf/description (item result 1))
+          )
+        ))
+        (dsf/no-save 'install true)
+        (dsf/disable-action 'install (lambda nil
+          (or (not (dsf/item)) (not (itmMatches (dsf/item) "d")))
+        ))
+
+        (dsf/action 'identify-single "Identify Current Item" 'C (lambda nil
+          (block (itm)
+            (setq itm (dsf/item))
+            (itmSetKnown itm)
+            (dsf/description "Identified item")
+          )
+        ))
+        (dsf/no-save 'identify-single true)
+        (dsf/disable-action 'identify-single (lambda nil (block (itm)
+          (or (not (setq itm (dsf/item))) (itmIsKnown itm))
+        )))
+
+        (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
+          (block nil
+            (objEnumItems gPlayerShip "*U" itm (block nil
+              (itmSetReference itm)
+              (itmSetKnown itm)
+            ))
+            (dsf/description "Identified all items")
+          )
+        ))
+        (dsf/no-save 'identify-all true)
+        (dsf/disable-action 'identify-all (lambda nil (not (dsf/item))))
+      )
+    ))
 
     (setq god/refuel-player (lambda nil
       ;; pump it full of Longzhu's
