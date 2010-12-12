@@ -1,15 +1,15 @@
 <?xml version="1.0" ?>
 <!DOCTYPE TranscendenceExtension
 [
-    <!ENTITY modGODModuleObjectSpawn        "0xDCBA0520">
+    <!ENTITY modGODModuleSpaceBattle        "0xDCBA0520">
     <!ENTITY svGODRed                       "0xDCBA0521">
     <!ENTITY svGODBlue                      "0xDCBA0522">
     <!ENTITY svGODGreen                     "0xDCBA0523">
 ]>
 
 <TranscendenceExtension
-  UNID="&modGODModuleObjectSpawn;"
-  name="G.O.D. Module - Object Spawn"
+  UNID="&modGODModuleSpaceBattle;"
+  name="G.O.D. Module - Space Battle"
   credits="alterecco"
   version="1.0">
 
@@ -17,16 +17,17 @@
     (block (module)
 
     (setq module (list
-      '((weight       4)
-        (title        "Space Objects")
-        (subtitle     "...")
+      '((weight       1)
+        (title        "Space Battle")
+        (subtitle     "Create massive space battles, if that is your thing")
         (on-select    (block nil
           (dsf/action 'select "Select" 'S (lambda nil
             (block nil
-              (god/spawn-list)
+              (god/battle-overview)
             )
           ))
         ))
+        (hide true)
       )
     ))
 
@@ -34,6 +35,46 @@
       module
       (append god/modules module)
     ))
+
+    (setq god/battle-overview (lambda nil
+      (block nil
+        (dsf/screen 'battles-overview "Battle Overview" 'custompicker)
+
+        (dsf/list-data (lambda (data)
+          (block nil
+            (enum (-god/get-battle-squadrons) group
+              (setq data (append data (list
+                '((title "xxx")
+                )
+              )))
+            )
+            data
+          )
+        ))
+
+        (dsf/action 'select "Select" 'S (lambda nil
+        ))
+        (dsf/disable-action 'select (lambda nil (not (dsf/list-entry 'squadron))))
+
+        (dsf/action 'add "Add Squadron" 'A (lambda nil
+          (block nil
+          )
+        ))
+        (dsf/show-screen)
+      )
+    ))
+
+    (setq -god/get-battle-squadrons (lambda nil
+      (block ((groups (list)))
+        (enum (sysFindObject nil "st D:GODBattle") obj
+          (fn/hash-append groups (or (objGetData obj "GODBattleSquadron") "Unknown") obj)
+        )
+        groups
+      )
+    ))
+
+
+
 
     (setq god/spawn-list (lambda nil
       (block (spawn (data (list)))
@@ -180,10 +221,14 @@
       )
     ))
 
-    ;; sovereigns.
-    ;; Try to add staticdata to them that we can use in the
-    ;; screens. This means we would not need to hardcode as
-    ;; much information in several places.
+    ;; TODO: this can be improved once #553 is fixed
+    ;;
+    ;; return a list of sovereigns for use in the spawn
+    (setq -god/get-battle-sovereigns (lambda nil
+      (block nil
+        (filter (typFind "v") s (typGetStaticData s "GODBattleSovereign"))
+      )
+    ))
 
     )
   </Globals>
@@ -191,13 +236,14 @@
   <Sovereign UNID="&svGODRed;"
     name="Red Team"
     alignment="neutral"
+    attribute="god"
     >
     <Relationships>
       <Relationship sovereign="&svGODBlue;"  disposition="enemy" mutual="true" />
       <Relationship sovereign="&svGODGreen;" disposition="enemy" mutual="true" />
     </Relationships>
     <StaticData>
-      <TeamName>Red Team</TeamName>
+      <GODBattleSovereign>true</GODBattleSovereign>
       <TeamID>red</TeamID>
       <Description>...</Description>
     </StaticData>
@@ -206,13 +252,14 @@
   <Sovereign UNID="&svGODBlue;"
     name="Blue Team"
     alignment="neutral"
+    attribute="god"
     >
     <Relationships>
       <Relationship sovereign="&svGODRed;"   disposition="enemy" mutual="true" />
       <Relationship sovereign="&svGODGreen;" disposition="enemy" mutual="true" />
     </Relationships>
     <StaticData>
-      <TeamName>Blue Team</TeamName>
+      <GODBattleSovereign>true</GODBattleSovereign>
       <TeamID>blue</TeamID>
       <Description>...</Description>
     </StaticData>
@@ -221,13 +268,14 @@
   <Sovereign UNID="&svGODGreen;"
     name="Green Team"
     alignment="neutral"
+    attribute="god"
     >
     <Relationships>
       <Relationship sovereign="&svGODRed;"  disposition="enemy" mutual="true" />
       <Relationship sovereign="&svGODBlue;" disposition="enemy" mutual="true" />
     </Relationships>
     <StaticData>
-      <TeamName>Green Team</TeamName>
+      <GODBattleSovereign>true</GODBattleSovereign>
       <TeamID>green</TeamID>
       <Description>...</Description>
     </StaticData>

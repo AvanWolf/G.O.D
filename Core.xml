@@ -16,8 +16,8 @@
   version="1.0">
 
 <!--
-;   License:
-;     Public Domain - alterecco@gmail.com - 2010
+;;;;   License:
+;;;;     Public Domain - alterecco@gmail.com
 -->
 
   <Globals>
@@ -271,7 +271,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       0)
+    (weight       5)
     (title        "Repair Item")
     (subtitle     "Fix any item that needs fixing")
     (hide         (block ((do-hide true))
@@ -303,7 +303,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       0)
+    (weight       5)
     (title        "Damage Item")
     (subtitle     "Damage an item... just because")
     (on-select    (block nil
@@ -720,7 +720,6 @@
         (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
           (block nil
             (objEnumItems gPlayerShip "*U" itm (block nil
-              (itmSetReference itm)
               (itmSetKnown itm)
             ))
             (dsf/description "Identified all items")

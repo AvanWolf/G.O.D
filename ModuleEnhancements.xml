@@ -14,7 +14,7 @@
     (block (module)
 
     (setq module (list
-      '((weight     0)
+      '((weight     4)
         (title      "Apply Enhancement")
         (subtitle   "Because a +fast Ares Archcannon works wonders!")
         (on-select  (block nil
@@ -23,7 +23,7 @@
           ))
         ))
       )
-      '((weight       0)
+      '((weight       4)
         (title        "Analyze Enhancement")
         (subtitle     "Find out just what is going on with your enhancement")
         (hide         (block ((do-hide true))
