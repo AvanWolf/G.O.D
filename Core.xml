@@ -76,6 +76,175 @@
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - SPAWN OBJECTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       0)
+    (title        "Spawn Objects")
+    (subtitle     "Browse and spawn any object in game. Make them your friends, enemies or wingmen")
+    (on-select    (block nil
+      (dsf/action 'select "Select" 'S (lambda nil (block nil
+        (dsf/spawn-objects)
+      )))
+    ))
+  ))
+
+  (setq dsf/spawn-objects (lambda nil
+    (block (spawn)
+
+      (dsf/screen 'spawn-select "Select Spawn" 'custompicker)
+      ;; add ships
+      (dsf/list-data (fn/list-map (typFind "s") unid
+        (list
+          (list 'title      (typGetDataField unid 'name))
+          (list 'unid       unid)
+          (list 'type       'ship)
+        )
+      ))
+      ;; add stations
+      (dsf/list-data (fn/list-map (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
+        (list
+          (list 'title      (typGetDataField unid 'name))
+          (list 'unid       unid)
+          (list 'type       'station)
+        )
+      ))
+      (dsf/action 'select "Select" 'S (lambda nil
+        (block nil
+          (dsf/session 'type (dsf/list-entry 'type))
+          (dsf/session 'unid (dsf/list-entry 'unid))
+          (dsf/show-screen 'spawn-count)
+        )
+      ))
+      (dsf/disable-action 'select (lambda nil (not (dsf/list-entry 'type))))
+      (dsf/filter-screen)
+
+      (dsf/screen 'spawn-count "Set Spawn Amount")
+      (dsf/pane 'counter)
+      (dsf/description (lambda nil (block (unid)
+        (setq unid (dsf/session 'unid))
+        (cat "Select how many \"" (typGetDataField unid 'name) "\" you want to spawn")
+      )))
+      (dsf/action 'select "Select" 'S (lambda nil
+        (block nil
+          (dsf/session 'count (fn/constrain (dsf/counter) 1))
+          (dsf/show-screen 'spawn-behaviour)
+        )
+      ))
+      (dsf/default-action 'select)
+
+      (dsf/screen 'spawn-behaviour "Set Spawn Behaviour" 'custompicker)
+      (dsf/list-data (list (list
+        '((title      "Wingman")
+          (subtitle   "Add as wingman")
+          (orders     'wingman)
+          (hide       (eq (dsf/session 'type) 'station))
+        )
+        '((title      "Enemy")
+          (subtitle   "Add as enemy, attacking you")
+          (orders     'enemy)
+        )
+        '((title      "Random Enemy")
+          (subtitle   "Add as enemy, attacking random friendly")
+          (orders     'randomenemy)
+          (hide       true)
+        )
+        '((title      "Escort")
+          (subtitle   "Add as your escort")
+          (orders     'escort)
+          (hide       (eq (dsf/session 'type) 'station))
+        )
+        '((title      "Random Patrol")
+          (subtitle   "Make the ships patrol around random targets")
+          (orders     'patrol)
+          (hide       (eq (dsf/session 'type) 'station))
+        )
+        '((title      "Friendly")
+          (subtitle   "Add as friendly")
+          (orders     'friendly)
+          (hide       (eq (dsf/session 'type) 'ship))
+        )
+        '((title      "Passive")
+          (subtitle   "Add as passive (holding)")
+          (orders     'passive)
+          (hide       (eq (dsf/session 'type) 'station))
+        )
+      )))
+      (setq spawn (lambda nil
+        (block (unid type amount orders pos (objs (list)))
+          (setq unid (dsf/session-remove 'unid))
+          (setq type (dsf/session-remove 'type))
+          (setq amount (dsf/session-remove 'count))
+          (setq orders (dsf/list-entry 'orders))
+
+          ;; we create all short of the players pos
+          (setq pos (sysVectorPolarOffset gPlayerShip (random 30 150) 5))
+
+          (for i 0 amount
+            (switch
+              (eq type 'ship)
+                (lnkAppend objs (sysCreateShip unid pos &svIndependent;))
+              (eq type 'station)
+                (lnkAppend objs (sysCreateStation unid pos))
+            )
+          )
+
+          (if (gr (count objs) 0) (switch
+            (eq orders 'wingman)
+              (enum objs o
+                (block nil
+                  (objSetSovereign o &svCommonwealth;)
+                  (shpSetPlayerWingman o)
+                )
+              )
+            (eq orders 'enemy)
+              (enum objs o
+                (block nil
+                  (objSetSovereign o &svPirates;)
+                  (if (eq type 'ship)
+                    (shpOrder o 'attack gPlayerShip)
+                  )
+                )
+              )
+            (eq orders 'escort)
+              (enum objs o
+                (shpOrder o 'escort gPlayerShip)
+              )
+            (eq order 'patrol)
+              (enum objs o
+                (shpOrder o 'patrol (random (sysFindObject gPlayerShip "tF")))
+              )
+            (eq order 'friendly)
+              (enum objs o
+                (objSetSovereign o &svCommonwealth;)
+              )
+            (eq order 'passive)
+              (enum objs o
+                (shpOrder o 'hold)
+              )
+          ))
+        )
+      ))
+      (dsf/action 'spawn "Spawn And Exit" 'S (lambda nil
+        (block nil
+          (spawn)
+          (dsf/exit)
+        )
+      ))
+      (dsf/action 'spawn-more "Spawn and Add More" 'A (lambda nil
+        (block nil
+          (spawn)
+          (dsf/show-screen 'spawn-select)
+        )
+      ))
+      (dsf/default-action 'spawn)
+
+      (dsf/show-screen 'spawn-select)
+    )
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - BROWSE ITEMS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
