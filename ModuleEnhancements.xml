@@ -35,7 +35,7 @@
         (on-select    (block nil
           (dsf/action 'select "Select" 'S (lambda nil
             (block nil
-              (dsf/screen 'analyze-enhancement "Analyze Enhancement" 'itempicker-player)
+              (dsf/screen 'analyze-enhancement "Analyze Enhancement" 'itempicker)
               (dsf/item-filter "swa")
 
               (dsf/on-pane-initialize (lambda nil (block (itm hex)
@@ -69,7 +69,7 @@
     ))
 
     (setq god/enhance-item (lambda nil (block nil
-      (dsf/screen 'enhance-item "Enhance Item" 'itempicker-player)
+      (dsf/screen 'enhance-item "Enhance Item" 'itempicker)
       (dsf/description "Select an item you want to enhance")
       (dsf/item-filter "swa")
 
