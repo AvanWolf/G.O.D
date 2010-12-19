@@ -843,7 +843,7 @@
                 ;; add item
                 (setq cnt (dsf/counter))
                 (setq itm (itmCreate (itmGetUNID (dsf/item)) cnt))
-                (objAddItem dsf/player-ship itm)
+                (objAddItem gPlayerShip itm)
                 (dsf/pane "Default")
                 (dsf/action-label 'add-to-cargo "Add to Cargo Hold")
                 (dsf/action-key 'add-to-cargo 'A)
@@ -865,7 +865,7 @@
         (dsf/action 'install "Install Item" 'N (lambda nil
           (block (itm result)
             (setq itm (dsf/item))
-            (setq result (god/install-item itm nil nil dsf/player-ship))
+            (setq result (god/install-item itm nil nil))
             (dsf/description (item result 1))
           )
         ))
@@ -888,7 +888,7 @@
 
         (dsf/action 'identify-all "Identify All Items" 'I (lambda nil
           (block nil
-            (objEnumItems gPlayerShip "*U" itm (block nil
+            (enum (itmGetTypes criteria) itm (block nil
               (itmSetKnown itm)
             ))
             (dsf/description "Identified all items")
