@@ -122,6 +122,7 @@
 
       (dsf/screen 'spawn-count "Set Spawn Amount")
       (dsf/pane 'counter)
+      (dsf/on-pane-initialize (lambda nil (dsf/counter 1)))
       (dsf/description (lambda nil (block (unid)
         (setq unid (dsf/session 'unid))
         (cat "Select how many \"" (typGetDataField unid 'name) "\" you want to spawn")
