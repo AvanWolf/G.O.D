@@ -195,8 +195,9 @@
             (eq orders 'wingman)
               (enum objs o
                 (block nil
-                  (objSetSovereign o &svCommonwealth;)
-                  (shpSetPlayerWingman o)
+                  (objSetSovereign o &svIndependent;)
+                  (objSetEventHandler o &baStdWingmanBase;)
+                  (objFireEvent o "OrderJoinPlayer")
                 )
               )
             (eq orders 'enemy)
