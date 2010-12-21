@@ -1,0 +1,366 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TranscendenceExtension
+[
+    <!ENTITY modGODModuleTarget         "0xDCBA0511">
+]>
+
+<TranscendenceExtension
+  UNID="&modGODModuleTarget;"
+  name="G.O.D. Module - Target"
+  credits="alterecco"
+  version="1.0">
+
+  <Globals>
+    (block (module)
+
+    (setq module (list
+      '((weight     2)
+        (title      "Target")
+        (subtitle   "Do various things to your current target")
+        (hide       (not (objGetTarget gPlayerShip)))
+        (on-select  (block nil
+          (dsf/action 'select 'Select 'S (lambda nil
+            (god/target-screen)
+          ))
+        ))
+      )
+    ))
+
+    (setq god/modules (if (isError god/modules)
+      module
+      (append god/modules module)
+    ))
+
+    (setq god/target-screen (lambda nil (block nil
+      (dsf/screen 'target-screen "Target Actions")
+
+      (dsf/list-data (list
+        '((title      "Restore")
+          (subtitle   "Completely restore target")
+          (on-select  (block (target)
+            (if (setq target (objGetTarget gPlayerShip)) (block nil
+              (dsf/action 'select "Select" 'S (lambda nil (block nil
+                (god/restore-target target)
+                (dsf/description "Restored target")
+              )))
+              (dsf/no-save 'select true)
+            ))
+          ))
+        )
+        '((title      "Inspect Target")
+          (subtitle   "Inspect what your target is equipped with and has in it's cargo hold")
+          (on-select  (block (target)
+            (if (setq target (objGetTarget gPlayerShip)) (block nil
+              (dsf/action 'select 'Select 'S (lambda nil (block nil
+                (dsf/screen 'target-inspector "Object Inspector")
+                (god/object-inspector target)
+
+                ;; TODO: i would like this to be shown as well...
+                ;; atm the description provided by object-inspector overrides completely
+                ;(dsf/description (lambda nil (block nil
+                ;  (if (itmIsInstalled (dsf/item))
+                ;    "Installed"
+                ;    "Not Installed"
+                ;  )
+                ;)))
+
+                ;(dsf/action 'remove "Remove Item" 'R (lambda nil
+                ;  (block nil
+                ;    (objRemoveItem target (dsf/item))
+                ;    (dsf/data-remove 'initial-item)
+                ;    (dsf/show-screen)
+                ;    (dsf/description "Removed item")
+                ;  )
+                ;))
+                ;(dsf/hide-action 'remove (lambda nil (itmIsInstalled (dsf/item))))
+                (dsf/show-screen)
+              )))
+            ))
+          ))
+        )
+        ;'((title      "Install Device")
+        ;  (subtitle   "...")
+        ;  (on-select  (block (target)
+        ;    (if (setq target (objGetTarget gPlayerShip)) (block nil
+        ;    ))
+        ;  ))
+        ;)
+        ;'((title      "Remove Device")
+        ;  (subtitle   "...")
+        ;  (on-select  (block (target)
+        ;    (if (setq target (objGetTarget gPlayerShip)) (block nil
+        ;    ))
+        ;  ))
+        ;)
+        ;'((title      "Repair or Replace Armor")
+        ;  (subtitle   "...")
+        ;  (on-select  (block (target)
+        ;    (if (setq target (objGetTarget gPlayerShip)) (block nil
+        ;    ))
+        ;  ))
+        ;)
+        ;'((title      "Duplicate")
+        ;  (subtitle   "Create more of the same")
+        ;  (on-select  (block (target)
+        ;    (if (setq target (objGetTarget gPlayerShip)) (block nil
+        ;      (god/duplicate-target target)
+        ;    ))
+        ;  ))
+        ;)
+        '((title      "Set as Wingman")
+          (subtitle   "Make your target work for you")
+          (on-select  (block (target)
+            (if (setq target (objGetTarget gPlayerShip)) (block nil
+              (dsf/action 'select "Select" 'S (lambda nil
+                (block nil
+                  (shpCancelOrders target)
+                  (objSetSovereign target &svIndependent;)
+                  (objSetEventHandler target &baStdWingmanBase;)
+                  (objFireEvent target "OrderJoinPlayer")
+                )
+              ))
+            ))
+          ))
+          (hide       (not (objIsShip (objGetTarget gPlayerShip))))
+        )
+        '((title      "Change Orders")
+          (subtitle   "Change the mision of your target")
+          (on-select  (block (target)
+            (if (setq target (objGetTarget gPlayerShip)) (block nil
+              (dsf/action 'select "Select" 'S (lambda nil
+                (god/target-orders target)
+              ))
+            ))
+          ))
+          (hide       (not (objIsShip (objGetTarget gPlayerShip))))
+        )
+        ;'((title      "Change Sovereign")
+        ;  (subtitle   "...")
+        ;  (on-select  (block (target)
+        ;    (if (setq target (objGetTarget gPlayerShip)) (block nil
+        ;    ))
+        ;  ))
+        ;)
+        ;'((title      "Change Name")
+        ;  (subtitle   "...")
+        ;  (on-select  (block (target)
+        ;    (if (setq target (objGetTarget gPlayerShip)) (block nil
+        ;    ))
+        ;  ))
+        ;)
+        '((title      "Destroy")
+          (subtitle   "Just get rid of it")
+          (on-select  (block (target)
+            (if (setq target (objGetTarget gPlayerShip)) (block nil
+              (dsf/action 'select "Select" 'S (lambda nil (block nil
+                (objDestroy target)
+                (dsf/data-remove 'initial-item)
+                (dsf/back)
+                (dsf/description "Destroyed target")
+              )))
+              (dsf/no-save 'select true)
+            ))
+          ))
+        )
+      ))
+
+      (dsf/filter-screen)
+      (dsf/show-screen)
+    )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; HELPERS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    ;; TODO: add posibility of making an order queue
+    (setq god/target-orders (lambda (obj)
+      (block nil
+        (dsf/screen 'target-orders "Target Orders" 'custompicker)
+
+        (dsf/description (lambda nil (block (order desc target)
+          (setq order (shpGetOrder obj))
+          (setq desc (shpGetOrderDesc obj))
+          (setq target (shpGetOrderTarget obj))
+          (cat "Current Order: \"" order "\"\n"
+            (if target (cat "Target: \"" (objGetName target) "\"\n") "")
+            (if (and desc (not (or (eq desc "Nil") (eq desc "")))) desc "")
+          )
+        )))
+
+        (dsf/list-data (list (list
+          '((title      "Attack")
+            (subtitle   "Order ship to attack a target you designate")
+            (run        (block nil
+              (dsf/screen 'tmp "Order Attack")
+              (dsf/data-set 'filter-source (objGetTarget gPlayerShip))
+              (dsf/data-set 'default-filter-term "sTE")
+              (dsf/object-browser)
+              (dsf/action 'attack "Attack" 'A (lambda nil
+                (block (t)
+                  (setq t (objGetTarget gPlayerShip))
+                  (shpCancelOrders t)
+                  (shpOrder t 'attack (dsf/list-entry 'obj))
+                  (dsf/show-screen 'target-orders)
+                )
+              ))
+              (dsf/show-screen)
+            ))
+          )
+          '((title      "Cancel")
+            (subtitle   "Cancel ships current orders")
+            (run        (block nil
+              (shpCancelOrders (objGetTarget gPlayerShip))
+              (dsf/show-screen)
+              ;; TODO: I would like a way to show one time description updates
+              ;; this one actually overrides the current description i have :/
+              ;; (dsf/description "Cancelled Orders")
+            ))
+          )
+          ;'((title      "Orbit")
+          ;  (subtitle   "Order ship to orbit a target you designate at a certain distace")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Orbit")
+          ;  ))
+          ;)
+          ;'((title      "Escort")
+          ;  (subtitle   "Order ship to escort a target you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Escort")
+          ;  ))
+          ;)
+          ;'((title      "Follow")
+          ;  (subtitle   "Order ship to follow a target you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Follow")
+          ;  ))
+          ;)
+          ;'((title      "Gate")
+          ;  (subtitle   "Order ship to gate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Gate")
+          ;  ))
+          ;)
+          ;'((title      "Goto")
+          ;  (subtitle   "Order ships to go to a position you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Goto")
+          ;  ))
+          ;)
+          ;'((title      "Guard")
+          ;  (subtitle   "Order ship to guard a target you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Guard")
+          ;  ))
+          ;)
+          ;'((title      "Hold")
+          ;  (subtitle   "Order ship to hold position, optionally for a specified amount of time")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Hold")
+          ;  ))
+          ;)
+          ;'((title      "Dock")
+          ;  (subtitle   "Order ship to dock with a target you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Dock")
+          ;  ))
+          ;)
+          ;'((title      "Loot")
+          ;  (subtitle   "Order ship to loot a target you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Loot")
+          ;  ))
+          ;)
+          ;'((title      "Patrol")
+          ;  (subtitle   "Order ship to patrol a target you designate")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Patrol")
+          ;  ))
+          ;)
+          ;'((title      "Wait")
+          ;  (subtitle   "Order ship to wait for a specified amount of time")
+          ;  (run        (block nil
+          ;    (dsf/screen 'tmp "Order Wait")
+          ;  ))
+          ;)
+        )))
+
+        (dsf/action 'select "Select" 'S (lambda nil
+          (block nil
+            (fn/eval (dsf/list-entry 'run))
+          )
+        ))
+        (dsf/disable-action 'select (lambda nil (not (objGetTarget gPlayerShip))))
+        (dsf/no-save 'select true)
+
+        ;(dsf/screen 'order-target "Set Order Target" 'custompicker)
+
+        ;(dsf/screen 'order-time "Set Order Time")
+        ;(dsf/pane 'counter)
+
+        ;(dsf/screen 'order-distance "Set Order Distance")
+        ;(dsf/pane 'counter)
+
+        (dsf/show-screen 'target-orders)
+      )
+    ))
+
+    (setq god/object-inspector (lambda (obj)
+      (block (get-criteria)
+
+        (setq get-criteria (lambda nil
+          (fn/split (or (dsf/data-get 'filter-term) "*") "/")
+        ))
+
+        (dsf/data-from obj)
+
+        (dsf/screen-type 'itempicker)
+
+        ;; calculate the amount of items on the screen
+        (dsf/on-init (lambda nil (block ((cnt 0) criteria)
+          (setq criteria (get-criteria))
+          (objEnumItems obj "*" itm
+            (if (and
+                (itmMatches itm (item criteria 0))
+                (if (item criteria 1) (find (itmGetName itm 0) (item criteria 1)) true))
+              (setq cnt (add cnt 1))
+            )
+          )
+          ;; we have to run the filter once manually, to get the right count
+          (dsf/data-set 'item-count cnt)
+        )))
+
+        (dsf/item-filter (lambda nil (block (criteria)
+          (setq criteria (get-criteria))
+          (lambda (itm) (and
+            (itmMatches itm (item criteria 0))
+            (if (item criteria 1) (find (itmGetName itm 0) (item criteria 1)) true)
+          ))
+        )))
+
+        (-dsf/filter-description "*")
+
+        (dsf/on-run-action (lambda nil (block (itm)
+          (if (setq itm (dsf/item))
+            (dsf/data-set 'initial-item itm)
+            (dsf/data-remove 'initial-item)
+          )
+        )))
+
+        (dsf/on-initial-item (lambda nil (block (itm)
+          (if (setq itm (dsf/data-get 'initial-item))
+            (eq (dsf/item) itm)
+            True
+          )
+        )))
+
+        (-dsf/filter-action)
+      )
+    ))
+
+    )
+  </Globals>
+</TranscendenceExtension>
+<!--
+vim:ts=2:sw=2:sts=2:ft=tscript:
+-->
+
