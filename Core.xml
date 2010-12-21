@@ -125,7 +125,7 @@
       (dsf/on-pane-initialize (lambda nil (dsf/counter 1)))
       (dsf/description (lambda nil (block (unid)
         (setq unid (dsf/session 'unid))
-        (cat "Select how many \"" (typGetDataField unid 'name) "\" you want to spawn")
+        (cat "Select how many of the type \"" (typGetDataField unid 'name) "\" you want to spawn")
       )))
       (dsf/action 'select "Select" 'S (lambda nil
         (block nil
