@@ -236,7 +236,7 @@
   <Sovereign UNID="&svGODRed;"
     name="Red Team"
     alignment="neutral"
-    attribute="god"
+    attributes="god"
     >
     <Relationships>
       <Relationship sovereign="&svGODBlue;"  disposition="enemy" mutual="true" />
@@ -252,7 +252,7 @@
   <Sovereign UNID="&svGODBlue;"
     name="Blue Team"
     alignment="neutral"
-    attribute="god"
+    attributes="god"
     >
     <Relationships>
       <Relationship sovereign="&svGODRed;"   disposition="enemy" mutual="true" />
@@ -268,7 +268,7 @@
   <Sovereign UNID="&svGODGreen;"
     name="Green Team"
     alignment="neutral"
-    attribute="god"
+    attributes="god"
     >
     <Relationships>
       <Relationship sovereign="&svGODRed;"  disposition="enemy" mutual="true" />
