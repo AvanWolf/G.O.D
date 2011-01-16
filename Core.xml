@@ -396,7 +396,8 @@
               (dsf/exit)
             )
           ))
-          (dsf/set-disable-action 'jump (lambda nil (not (dsf/list-entry))))
+          (dsf/set-default-action 'jump)
+          (dsf/set-disable-action 'jump (lambda nil (not (dsf/get-list-entry))))
 
           (dsf/show-screen)
         )
