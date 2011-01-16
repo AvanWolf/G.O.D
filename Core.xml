@@ -27,8 +27,6 @@
       Spawn Objects
         - Add more info in subtitle - level,
         - Possibly order by level?
-        - "Random Patrol" order does not work
-        - Add a "Agressive Wander" order (wander, with a destructive chaos sovereign)
       TimeStop
         - When gating to heretic there are cases where the overlay is not removed
         - When the above is in effect, entering and exiting the screen again crashes the game!!
@@ -163,10 +161,9 @@
           (subtitle   "Add as enemy, attacking you")
           (orders     'enemy)
         )
-        '((title      "Random Enemy")
-          (subtitle   "Add as enemy, attacking random friendly")
-          (orders     'randomenemy)
-          (hide       true)
+        '((title      "Aggressive Wander")
+          (subtitle   "Add as DestructiveChaos, attacking nearest enemies")
+          (orders     'agressive)
         )
         '((title      "Escort")
           (subtitle   "Add as your escort")
@@ -201,6 +198,11 @@
                 (block nil
                   (objSetSovereign obj &svPirates;)
                   (shpOrder obj 'attack gPlayerShip)
+                )
+              (eq orders 'aggressive)
+                (block nil
+                  (objSetSovereign obj &svDestructiveChaos;)
+                  (shpSetCommandCode obj (block nil (shpOrder gSource 'attackNearestEnemy)))
                 )
               (eq orders 'escort)
                 (shpOrder obj 'escort gPlayerShip)
