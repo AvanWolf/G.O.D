@@ -263,7 +263,7 @@
 
           ;; TODO build a much more advanced system list (in correct order)
           ;; sort by level
-          (setq systems (fn/list-sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
+          (setq systems (fn/sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
           ;; filter out endgame (or any others systems with no gates)
           (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
 
@@ -721,7 +721,7 @@
 
     ;;; sort list by weight
     (dsf/add-list-filter (lambda (entries)
-      (fn/list-sort entries a b (ls (dsf/get a 'weight) (dsf/get b 'weight)))
+      (fn/sort entries a b (ls (dsf/get a 'weight) (dsf/get b 'weight)))
     ))
 
     ;;; timestop handlers
@@ -778,8 +778,8 @@
 ;    (setq god/format-modules (lambda nil (block (modules (list))
 ;      (if (not (setq modules god/formatted-modules)) (block nil
 ;        ;; sort list once by weight, then by title
-;        (setq modules (dsf/list-sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
-;        ;(setq modules (dsf/list-sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
+;        (setq modules (dsf/sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
+;        ;(setq modules (dsf/sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
 ;        (setq god/formatted-modules modules)
 ;      ))
 ;      modules
