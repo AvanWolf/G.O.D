@@ -25,16 +25,7 @@
       On Replace Armor screen:
         "No binding for symbol gCheckMilitaryID ###(and gCheckMilitaryID (itmHasModifier..."
       Spawn Objects
-        - Add more info in subtitle - level,
-        - Possibly order by level?
-      TimeStop
-        - When gating to heretic there are cases where the overlay is not removed
-        - When the above is in effect, entering and exiting the screen again crashes the game!!
-            I founed why it would crash
-            so what seems to happen is that the time freeze option in godmod
-            when the time is frozen at gate-in using the travel function
-            the time-freeze option is still set to "Stop time" instead of "Start time"
-            you  have to first select stop time, and then hit back (not exit), and then select start time, and then it should work without crashing
+        - Add more info in subtitle?
 
 
 
@@ -102,7 +93,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       0)
+    (weight       3)
     (title        "Spawn Ships")
     (subtitle     "Browse and spawn any ship in game. Make them your friends, enemies or wingmen")
     (on-select    (block nil
@@ -284,10 +275,13 @@
           (dsf/add-action 'gate "Select" 'S (lambda nil (block (node gate)
             (setq node (dsf/get-list-entry 'node))
             (setq gate (item (sysGetStargates node) 0))
-            (objGateTo gPlayerShip node gate &efStargateOut;)
-            (plyMessage gPlayer (cat "Gating to " (sysGetName node)))
-            (dsf/exit)
+            (dsf/on-global-exit (lambda nil (block nil
+              (objGateTo gPlayerShip node gate &efStargateOut;)
+              (plyMessage gPlayer (cat "Gating to " (sysGetName node)))
+            )))
+            (dsf/exit 'force)
           )))
+          (dsf/set-default-action 'gate)
           (dsf/set-disable-action 'gate (lambda nil (not (dsf/get-list-entry))))
 
           (dsf/show-screen)
@@ -314,7 +308,7 @@
               (setq o (dsf/get-list-entry 'obj))
               (objJumpTo gPlayerShip (sysVectorRandom (objGetPos o) 8 4 "*"))
               (plyMessage gPlayer (cat "Jumped to " (objGetName o)))
-              (dsf/exit)
+              (dsf/exit 'force)
             )
           ))
           (dsf/set-default-action 'jump)
@@ -692,16 +686,18 @@
     (title      "Time Stop")
     (subtitle   "Stop time and start it again. Great for taking a look around")
     (on-select  (block (state)
-      (setq state (objGetData gPlayerShip 'god/keeptimestop))
+      (setq state (typGetGlobalData &ovGODTimeStop; 'keep-running))
       (dsf/add-action 'toggle-time
         (if state "Start Time" "Stop Time") 'S
         (lambda nil (if state
           (block nil
-            (objSetData gPlayerShip 'god/keeptimestop nil)
+            (typSetGlobalData &ovGODTimeStop; 'keep-running nil)
+            (dsf/set-action-label 'toggle-time "Stop Time")
             (dsf/notify "Started time")
           )
           (block nil
-            (objSetData gPlayerShip 'god/keeptimestop true)
+            (typSetGlobalData &ovGODTimeStop; 'keep-running true)
+            (dsf/set-action-label 'toggle-time "Start Time")
             (dsf/notify "Stopped time")
           )
         ))
@@ -729,20 +725,20 @@
       (fn/sort entries a b (ls (dsf/get a 'weight) (dsf/get b 'weight)))
     ))
 
-    ;;; timestop handlers
-    ;(dsf/on-init (lambda nil
-    ;  (if (not (objGetData gPlayerShip 'god/timeoverlay))
-    ;    (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
-    ;  )
-    ;))
-    ;(dsf/on-global-exit (lambda nil (block (oID keepStopped)
-    ;  (setq oID (objGetData gPlayerShip 'god/timeoverlay))
-    ;  (setq keepStopped (objGetData gPlayerShip 'god/keeptimestop))
-    ;  (if (and (not keepStopped) oID) (block nil
-    ;    (objRemoveOverlay gPlayerShip oID)
-    ;    (objSetData gPlayerShip 'god/timeoverlay nil)
-    ;  ))
-    ;)))
+    ;; timestop handlers
+    (dsf/on-screen-init (lambda nil
+      (if (not (typGetGlobalData &ovGODTimeStop; 'running))
+        (typSetGlobalData &ovGODTimeStop; 'running (objAddOverlay gPlayerShip &ovGODTimeStop;))
+      )
+    ))
+    (dsf/on-global-exit (lambda nil (block (oID keep)
+      (setq oID (typGetGlobalData &ovGODTimeStop; 'running))
+      (setq keep (typGetGlobalData &ovGODTimeStop; 'keep-running))
+      (if (and (not keep) oID) (block nil
+        (objRemoveOverlay gPlayerShip oID)
+        (typSetGlobalData &ovGODTimeStop; 'running nil)
+      ))
+    )))
 
     (dsf/filter-screen)
     (dsf/show-screen)
@@ -796,6 +792,7 @@
 
   <Globals>
     (block Nil
+
 
     ;; rewrite this screen to identify all items by default and un-id them on the way out
     (setq god/item-browser (lambda (criteria)
