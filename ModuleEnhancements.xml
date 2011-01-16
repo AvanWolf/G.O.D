@@ -124,7 +124,7 @@ TODO
         ))
       )
 
-      (dsf/action 'select "Select" 'S (lambda nil (block (type)
+      (dsf/add-action 'select "Select" 'S (lambda nil (block (type)
         (dsf/session-set 'enhancement-hex (dsf/get-list-entry 'hex))
         (setq type (dsf/get-list-entry 'type))
 
@@ -199,7 +199,7 @@ TODO
         )
       )))
 
-      (dsf/add-action 'more "Enhance More" 'E (lambda nil
+      (dsf/add-action 'more "Enhance More" 'M (lambda nil
         (god/enhance-item)
       ))
       (dsf/set-no-save 'more true)
@@ -232,7 +232,7 @@ TODO
         ))
         selected
       )
-    ))
+      ))
 
     (setq god/enhancement-data (list
       '((name           "Damage Reflect")
