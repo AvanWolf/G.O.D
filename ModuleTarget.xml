@@ -19,9 +19,10 @@
         (subtitle   "Do various things to your current target")
         (hide       (not (objGetTarget gPlayerShip)))
         (on-select  (block nil
-          (dsf/action 'select 'Select 'S (lambda nil
+          (dsf/add-action 'select 'Select 'S (lambda nil
             (god/target-screen)
           ))
+          (dsf/set-default-action 'select)
         ))
       )
     ))
@@ -32,18 +33,19 @@
     ))
 
     (setq god/target-screen (lambda nil (block nil
-      (dsf/screen 'target-screen "Target Actions")
+      (dsf/new-screen 'target-screen "Target Actions")
 
-      (dsf/list-data (list
+      (dsf/add-list-entries (list
         '((title      "Restore")
           (subtitle   "Completely restore target")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/action 'select "Select" 'S (lambda nil (block nil
+              (dsf/add-action 'select "Select" 'S (lambda nil (block nil
                 (god/restore-target target)
-                (dsf/description "Restored target")
+                (dsf/notify "Restored target")
               )))
-              (dsf/no-save 'select true)
+              (dsf/set-default-action 'select)
+              (dsf/set-no-save 'select true)
             ))
           ))
         )
@@ -51,8 +53,8 @@
           (subtitle   "Inspect what your target is equipped with and has in it's cargo hold")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/action 'select 'Select 'S (lambda nil (block nil
-                (dsf/screen 'target-inspector "Object Inspector")
+              (dsf/add-action 'select 'Select 'S (lambda nil (block nil
+                (dsf/new-screen 'target-inspector "Object Inspector")
                 (god/object-inspector target)
 
                 ;; TODO: i would like this to be shown as well...
@@ -75,6 +77,7 @@
                 ;(dsf/hide-action 'remove (lambda nil (itmIsInstalled (dsf/item))))
                 (dsf/show-screen)
               )))
+              (dsf/set-default-action 'select)
             ))
           ))
         )
@@ -111,14 +114,14 @@
           (subtitle   "Make your target work for you")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/action 'select "Select" 'S (lambda nil
-                (block nil
-                  (shpCancelOrders target)
-                  (objSetSovereign target &svIndependent;)
-                  (objSetEventHandler target &baStdWingmanBase;)
-                  (objFireEvent target "OrderJoinPlayer")
-                )
-              ))
+              (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+                (shpCancelOrders target)
+                (objSetSovereign target &svIndependent;)
+                (objSetEventHandler target &baStdWingmanBase;)
+                (objFireEvent target "OrderJoinPlayer")
+                (dsf/notify "Ordered ship to join as Wingman")
+              )))
+              (dsf/set-default-action 'select)
             ))
           ))
           (hide       (not (objIsShip (objGetTarget gPlayerShip))))
@@ -127,9 +130,10 @@
           (subtitle   "Change the mision of your target")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/action 'select "Select" 'S (lambda nil
+              (dsf/add-action 'select "Select" 'S (lambda nil
                 (god/target-orders target)
               ))
+              (dsf/set-default-action 'select)
             ))
           ))
           (hide       (not (objIsShip (objGetTarget gPlayerShip))))
@@ -152,13 +156,14 @@
           (subtitle   "Just get rid of it")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/action 'select "Select" 'S (lambda nil (block nil
+              (dsf/add-action 'select "Select" 'S (lambda nil (block nil
                 (objDestroy target)
-                (dsf/data-remove 'initial-item)
+                (dsf/screen-delete 'initial-item)
                 (dsf/back)
-                (dsf/description "Destroyed target")
+                (dsf/notify "Destroyed target. You have to target a new ship before you can return to the menu.")
               )))
-              (dsf/no-save 'select true)
+              (dsf/set-default-action 'select)
+              (dsf/set-no-save 'select true)
             ))
           ))
         )
@@ -175,9 +180,9 @@
     ;; TODO: add posibility of making an order queue
     (setq god/target-orders (lambda (obj)
       (block nil
-        (dsf/screen 'target-orders "Target Orders" 'custompicker)
+        (dsf/new-screen 'target-orders "Target Orders" 'custompicker)
 
-        (dsf/description (lambda nil (block (order desc target)
+        (dsf/set-description (lambda (desc) (block (order target)
           (setq order (shpGetOrder obj))
           (setq desc (shpGetOrderDesc obj))
           (setq target (shpGetOrderTarget obj))
@@ -187,22 +192,23 @@
           )
         )))
 
-        (dsf/list-data (list (list
+        (dsf/add-list-entries (list
           '((title      "Attack")
             (subtitle   "Order ship to attack a target you designate")
             (run        (block nil
-              (dsf/screen 'tmp "Order Attack")
-              (dsf/data-set 'filter-source (objGetTarget gPlayerShip))
-              (dsf/data-set 'default-filter-term "sTE")
+              (dsf/new-screen 'tmp "Order Attack")
+              (dsf/screen-set 'filter-source (objGetTarget gPlayerShip))
+              (dsf/screen-set 'default-filter-term "sTE")
               (dsf/object-browser)
-              (dsf/action 'attack "Attack" 'A (lambda nil
+              (dsf/add-action 'attack "Attack" 'A (lambda nil
                 (block (t)
                   (setq t (objGetTarget gPlayerShip))
                   (shpCancelOrders t)
-                  (shpOrder t 'attack (dsf/list-entry 'obj))
+                  (shpOrder t 'attack (dsf/get-list-entry 'obj))
                   (dsf/show-screen 'target-orders)
                 )
               ))
+              (dsf/set-default-action 'attack)
               (dsf/show-screen)
             ))
           )
@@ -282,15 +288,16 @@
           ;    (dsf/screen 'tmp "Order Wait")
           ;  ))
           ;)
-        )))
+        ))
 
-        (dsf/action 'select "Select" 'S (lambda nil
+        (dsf/add-action 'select "Select" 'S (lambda nil
           (block nil
-            (fn/eval (dsf/list-entry 'run))
+            (dsf/eval (dsf/get-list-entry 'run))
           )
         ))
-        (dsf/disable-action 'select (lambda nil (not (objGetTarget gPlayerShip))))
-        (dsf/no-save 'select true)
+        (dsf/set-default-action 'select)
+        (dsf/set-disable-action 'select (lambda nil (not (objGetTarget gPlayerShip))))
+        (dsf/set-no-save 'select true)
 
         ;(dsf/screen 'order-target "Set Order Target" 'custompicker)
 
@@ -308,15 +315,15 @@
       (block (get-criteria)
 
         (setq get-criteria (lambda nil
-          (fn/split (or (dsf/data-get 'filter-term) "*") "/")
+          (fn/split (or (dsf/screen-get 'filter-term) "*") "/")
         ))
 
-        (dsf/data-from obj)
+        (dsf/set-data-from obj)
 
-        (dsf/screen-type 'itempicker)
+        (dsf/set-type 'itempicker)
 
         ;; calculate the amount of items on the screen
-        (dsf/on-init (lambda nil (block ((cnt 0) criteria)
+        (dsf/on-screen-init (lambda nil (block ((cnt 0) criteria)
           (setq criteria (get-criteria))
           (objEnumItems obj "*" itm
             (if (and
@@ -326,10 +333,10 @@
             )
           )
           ;; we have to run the filter once manually, to get the right count
-          (dsf/data-set 'item-count cnt)
+          (dsf/screen-set 'item-count cnt)
         )))
 
-        (dsf/item-filter (lambda nil (block (criteria)
+        (dsf/set-item-filter (lambda nil (block (criteria)
           (setq criteria (get-criteria))
           (lambda (itm) (and
             (itmMatches itm (item criteria 0))
@@ -341,14 +348,14 @@
 
         (dsf/on-run-action (lambda nil (block (itm)
           (if (setq itm (dsf/item))
-            (dsf/data-set 'initial-item itm)
-            (dsf/data-remove 'initial-item)
+            (dsf/screen-set 'initial-item itm)
+            (dsf/screen-delete 'initial-item)
           )
         )))
 
         (dsf/on-initial-item (lambda nil (block (itm)
-          (if (setq itm (dsf/data-get 'initial-item))
-            (eq (dsf/item) itm)
+          (if (setq itm (dsf/screen-get 'initial-item))
+            (eq (dsf/get-item) itm)
             True
           )
         )))
