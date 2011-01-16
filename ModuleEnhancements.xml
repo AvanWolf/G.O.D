@@ -104,7 +104,7 @@ TODO
       )))
       (dsf/set-default-action 'select)
       (dsf/set-disable-action 'select (lambda nil (not (dsf/get-item))))
-      (dsf/set-no-save 'select true)
+      (dsf/set-no-save 'select)
 
       (dsf/show-screen)
     )))
@@ -137,9 +137,9 @@ TODO
         )
       )))
       (dsf/set-default-action 'select)
-      (dsf/set-no-save 'select true)
+      (dsf/set-no-save 'select)
 
-      (dsf/set-no-back true)
+      (dsf/set-no-back)
       (dsf/show-screen)
     )))
 
@@ -162,9 +162,9 @@ TODO
         )
       ))
       (dsf/set-default-action 'select)
-      (dsf/set-no-save 'select true)
+      (dsf/set-no-save 'select)
 
-      (dsf/set-no-back true)
+      (dsf/set-no-back)
       (dsf/show-screen)
     )))
 
@@ -181,9 +181,9 @@ TODO
         (god/enhancement-apply)
       )))
       (dsf/set-default-action 'select)
-      (dsf/set-no-save 'select true)
+      (dsf/set-no-save 'select)
 
-      (dsf/set-no-back true)
+      (dsf/set-no-back)
       (dsf/show-screen)
     )))
 
@@ -202,15 +202,15 @@ TODO
       (dsf/add-action 'more "Enhance More" 'M (lambda nil
         (god/enhance-item)
       ))
-      (dsf/set-no-save 'more true)
+      (dsf/set-no-save 'more)
 
       (dsf/add-action 'return "Return to Main" 'R (lambda nil
         (god/core-screen)
       ))
       (dsf/set-default-action 'return)
-      (dsf/set-no-save 'return true)
+      (dsf/set-no-save 'return)
 
-      (dsf/set-no-back true)
+      (dsf/set-no-back)
       (dsf/show-screen)
     )))
 
