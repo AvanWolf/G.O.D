@@ -29,7 +29,6 @@
         - Possibly order by level?
         - "Random Patrol" order does not work
         - Add a "Agressive Wander" order (wander, with a destructive chaos sovereign)
-        - Can not spawn less than two?
       TimeStop
         - When gating to heretic there are cases where the overlay is not removed
         - When the above is in effect, entering and exiting the screen again crashes the game!!
@@ -101,50 +100,42 @@
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
-;;;; {{{ MODULE - SPAWN OBJECTS
+;;;; {{{ MODULE - SPAWN SHIPS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
     (weight       0)
-    (title        "Spawn Objects")
-    (subtitle     "Browse and spawn any object in game. Make them your friends, enemies or wingmen")
+    (title        "Spawn Ships")
+    (subtitle     "Browse and spawn any ship in game. Make them your friends, enemies or wingmen")
     (on-select    (block nil
       (dsf/add-action 'select "Select" 'S (lambda nil (block nil
-        (dsf/spawn-objects)
+        (dsf/spawn-ships)
       )))
       (dsf/set-default-action 'select)
     ))
   ))
 
-  (setq dsf/spawn-objects (lambda nil
+  (setq dsf/spawn-ships (lambda nil
     (block (spawn)
 
-      (dsf/new-screen 'spawn-select "Select Spawn" 'custompicker)
+      (dsf/new-screen 'ship-select "Select Ship" 'custompicker)
 
-      ;; add ships and stations to the list
+      ;; add ships to the list
       (enum (typFind "s") unid
         (dsf/add-list-entry (list
           (list 'title      (typGetDataField unid 'name))
           (list 'unid       unid)
-          (list 'type       'ship)
-        ))
-      )
-      (enum (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
-        (dsf/add-list-entry (list
-          (list 'title      (typGetDataField unid 'name))
-          (list 'unid       unid)
-          (list 'type       'station)
         ))
       )
       (dsf/add-action 'select "Select" 'S (lambda nil
         (block nil
-          (dsf/session-set 'type (dsf/get-list-entry 'type))
           (dsf/session-set 'unid (dsf/get-list-entry 'unid))
           (dsf/show-screen 'spawn-count)
         )
       ))
       (dsf/set-default-action 'select)
-      (dsf/set-disable-action 'select (lambda nil (not (dsf/get-list-entry 'type))))
+      ;; disable the action if the list is empty
+      (dsf/set-disable-action 'select (lambda nil (not (dsf/get-list-entry))))
       (dsf/filter-screen)
 
       (dsf/new-screen 'spawn-count "Set Spawn Amount")
@@ -167,7 +158,6 @@
         '((title      "Wingman")
           (subtitle   "Add as wingman")
           (orders     'wingman)
-          (hide       (eq (dsf/session-get 'type) 'station))
         )
         '((title      "Enemy")
           (subtitle   "Add as enemy, attacking you")
@@ -181,91 +171,58 @@
         '((title      "Escort")
           (subtitle   "Add as your escort")
           (orders     'escort)
-          (hide       (eq (dsf/session-get 'type) 'station))
         )
-        '((title      "Random Patrol")
-          (subtitle   "Make the ships patrol around random targets")
+        '((title      "Patrol")
+          (subtitle   "Patrol around a random friendly target targets")
           (orders     'patrol)
-          (hide       (eq (dsf/session-get 'type) 'station))
-        )
-        '((title      "Friendly")
-          (subtitle   "Add as friendly")
-          (orders     'friendly)
-          (hide       (eq (dsf/session-get 'type) 'ship))
         )
         '((title      "Passive")
           (subtitle   "Add as passive (holding)")
           (orders     'passive)
-          (hide       (eq (dsf/session-get 'type) 'station))
         )
       ))
       (setq spawn (lambda nil
-        (block (unid type amount orders pos (objs (list)))
+        (block (unid amount orders)
           (setq unid (dsf/session-delete 'unid))
-          (setq type (dsf/session-delete 'type))
           (setq amount (dsf/session-delete 'count))
           (setq orders (dsf/get-list-entry 'orders))
 
-          ;; we create all short of the players pos
-          (setq pos (sysVectorPolarOffset gPlayerShip (random 30 150) 5))
-
-          (for i 0 amount
+          (for i 1 amount (block (obj)
+            ;; we create all short of the players pos
+            (setq obj (sysCreateShip unid (sysVectorPolarOffset gPlayerShip (random 0 359) (random 5 15)) &svIndependent;))
             (switch
-              (eq type 'ship)
-                (lnkAppend objs (sysCreateShip unid pos &svIndependent;))
-              (eq type 'station)
-                (lnkAppend objs (sysCreateStation unid pos))
-            )
-          )
-
-          (if (gr (count objs) 0) (switch
-            (eq orders 'wingman)
-              (enum objs o (block nil
-                (objSetSovereign o &svIndependent;)
-                (objSetEventHandler o &baStdWingmanBase;)
-                (objFireEvent o "OrderJoinPlayer")
-              ))
-            (eq orders 'enemy)
-              (enum objs o (block nil
-                (objSetSovereign o &svPirates;)
-                (if (eq type 'ship)
-                  (shpOrder o 'attack gPlayerShip)
+              (eq orders 'wingman)
+                (block nil
+                  (objSetSovereign obj &svIndependent;)
+                  (objSetEventHandler obj &baStdWingmanBase;)
+                  (objFireEvent obj "OrderJoinPlayer")
                 )
-              ))
-            (eq orders 'escort)
-              (enum objs o
-                (shpOrder o 'escort gPlayerShip)
-              )
-            (eq order 'patrol)
-              (enum objs o
-                (shpOrder o 'patrol (random (sysFindObject gPlayerShip "tF")))
-              )
-            (eq order 'friendly)
-              (enum objs o
-                (objSetSovereign o &svCommonwealth;)
-              )
-            (eq order 'passive)
-              (enum objs o
-                (shpOrder o 'hold)
-              )
+              (eq orders 'enemy)
+                (block nil
+                  (objSetSovereign obj &svPirates;)
+                  (shpOrder obj 'attack gPlayerShip)
+                )
+              (eq orders 'escort)
+                (shpOrder obj 'escort gPlayerShip)
+              (eq orders 'patrol)
+                (shpOrder obj 'patrol (random (sysFindObject gPlayerShip "tF")) (random 10 40))
+              (eq orders 'passive)
+                  (shpOrder obj 'hold)
+            )
           ))
         )
       ))
-      (dsf/add-action 'spawn "Spawn And Exit" 'S (lambda nil
-        (block nil
-          (spawn)
-          (dsf/exit)
-        )
-      ))
+      (dsf/add-action 'spawn "Spawn And Exit" 'S (lambda nil (block nil
+        (spawn)
+        (dsf/exit 'force)
+      )))
       (dsf/set-default-action 'spawn)
-      (dsf/add-action 'spawn-more "Spawn and Add More" 'A (lambda nil
-        (block nil
-          (spawn)
-          (dsf/show-screen 'spawn-select)
-        )
-      ))
+      (dsf/add-action 'spawn-more "Spawn and Add More" 'A (lambda nil (block nil
+        (spawn)
+        (dsf/show-screen 'spawn-select)
+      )))
 
-      (dsf/show-screen 'spawn-select)
+      (dsf/show-screen 'ship-select)
     )
   ))
 
