@@ -117,6 +117,7 @@
     (block (spawn)
 
       (dsf/new-screen 'ship-select "Select Ship" 'custompicker)
+      (dsf/filter-screen)
 
       ;; add ships to the list
       (enum (typFind "s") unid
@@ -139,7 +140,6 @@
       (dsf/set-default-action 'select)
       ;; disable the action if the list is empty
       (dsf/set-disable-action 'select (lambda nil (not (dsf/get-list-entry))))
-      (dsf/filter-screen)
 
       (dsf/new-screen 'spawn-count "Set Spawn Amount")
       (dsf/set-pane 'counter)
@@ -265,6 +265,7 @@
                 (current (sysGetNode)))
 
           (dsf/new-screen 'travel-galaxy "Travel Galaxy")
+          (dsf/filter-screen)
 
           ;; TODO build a much more advanced system list (in correct order)
           ;; sort by level
@@ -289,7 +290,6 @@
           )))
           (dsf/set-disable-action 'gate (lambda nil (not (dsf/get-list-entry))))
 
-          (dsf/filter-screen)
           (dsf/show-screen)
         )
       ))
