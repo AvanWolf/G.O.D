@@ -122,9 +122,14 @@
       (enum (typFind "s") unid
         (dsf/add-list-entry (list
           (list 'title      (typGetDataField unid 'name))
+          (list 'subtitle   (cat "Level: " (typGetDataField unid 'level)))
           (list 'unid       unid)
+          (list 'level      (typGetDataField unid 'level))
         ))
       )
+      (dsf/add-list-filter (lambda (entries)
+        (fn/sort entries a b (gr (dsf/get a 'level) (dsf/get b 'level)))
+      ))
       (dsf/add-action 'select "Select" 'S (lambda nil
         (block nil
           (dsf/session-set 'unid (dsf/get-list-entry 'unid))
