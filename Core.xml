@@ -748,55 +748,6 @@
     (dsf/show-screen)
   )))
 
-
-;    (setq god/core-screen (lambda nil (block nil
-;
-;      (dsf/new-screen 'god-core "G.O.D")
-;      (dsf/filter-screen)
-;      (dsf/list-data (god/format-modules))
-;
-;      (dsf/add-action 'select "Select" 'S (lambda nil
-;        (dsf/eval (dsf/list-entry 'action))
-;      ))
-;      (dsf/save-action 'select true)
-;
-;      ;; timestop handlers
-;      (dsf/on-init (lambda nil
-;        (if (not (objGetData gPlayerShip 'god/timeoverlay))
-;          (objSetData gPlayerShip 'god/timeoverlay (objAddOverlay gPlayerShip &ovGODTimeStop;))
-;        )
-;      ))
-;      (dsf/on-global-exit (lambda nil (block (oID keepStopped)
-;        (setq oID (objGetData gPlayerShip 'god/timeoverlay))
-;        (setq keepStopped (objGetData gPlayerShip 'god/keeptimestop))
-;        (if (and (not keepStopped) oID) (block nil
-;          (objRemoveOverlay gPlayerShip oID)
-;          (objSetData gPlayerShip 'god/timeoverlay nil)
-;        ))
-;      )))
-;
-;      (dsf/exit-action)
-;      (dsf/show-screen)
-;    )))
-;
-;    ;; gather all the G.O.D modules into one custompicker list
-;    (setq god/format-modules (lambda nil (block (modules (list))
-;      (if (not (setq modules god/formatted-modules)) (block nil
-;        ;; sort list once by weight, then by title
-;        (setq modules (dsf/sort god/modules a b (ls (dsf/hash-get a 'weight) (dsf/hash-get b 'weight))))
-;        ;(setq modules (dsf/sort modules a b (ls (dsf/hash-get a 'title) (dsf/hash-get b 'title))))
-;        (setq god/formatted-modules modules)
-;      ))
-;      modules
-;    )))
-;
-;    ;;; This global variable is used to store the formatted list of modules
-;    ;;; so that we don't have to recreate it on every run.
-;    ;;; This allows us to make the building of the list more expensive
-;    ;;; We don't save this on the ship so we can catch changes to the
-;    ;;; modules made between sessions
-;    (setq god/formatted-modules nil)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
