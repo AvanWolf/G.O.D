@@ -103,7 +103,7 @@ TODO
         (god/enhancement-choose)
       )))
       (dsf/set-default-action 'select)
-      (dsf/set-disable-action 'select (lambda nil (not (dsf/get-item))))
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
       (dsf/set-no-save 'select)
 
       (dsf/show-screen)

@@ -45,7 +45,7 @@
                 (dsf/notify "Restored target")
               )))
               (dsf/set-default-action 'select)
-              (dsf/set-no-save 'select true)
+              (dsf/set-no-save 'select)
             ))
           ))
         )
@@ -163,7 +163,7 @@
                 (dsf/notify "Destroyed target. You have to target a new ship before you can return to the menu.")
               )))
               (dsf/set-default-action 'select)
-              (dsf/set-no-save 'select true)
+              (dsf/set-no-save 'select)
             ))
           ))
         )
@@ -297,7 +297,7 @@
         ))
         (dsf/set-default-action 'select)
         (dsf/set-disable-action 'select (lambda nil (not (objGetTarget gPlayerShip))))
-        (dsf/set-no-save 'select true)
+        (dsf/set-no-save 'select)
 
         ;(dsf/screen 'order-target "Set Order Target" 'custompicker)
 
