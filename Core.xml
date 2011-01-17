@@ -59,6 +59,7 @@
         (dsf/notify "Your Reactor has been refueled")
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -82,6 +83,7 @@
         (dsf/notify "Restored your ship")
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -98,6 +100,7 @@
         (dsf/spawn-ships)
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -127,7 +130,7 @@
       ))
       (dsf/set-default-action 'select)
       ;; disable the action if the list is empty
-      (dsf/set-disable-action 'select (lambda nil (not (dsf/get-list-entry))))
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
 
       (dsf/new-screen 'spawn-count "Set Spawn Amount")
       (dsf/set-pane 'counter)
@@ -290,6 +293,7 @@
         (dsf/show-screen)
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -333,12 +337,13 @@
             (dsf/exit 'force)
           )))
           (dsf/set-default-action 'gate)
-          (dsf/set-disable-action 'gate (lambda nil (not (dsf/get-list-entry))))
+          (dsf/set-disable-action 'gate '(dsf/list-is-empty))
 
           (dsf/show-screen)
         )
       ))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -363,12 +368,13 @@
             )
           ))
           (dsf/set-default-action 'jump)
-          (dsf/set-disable-action 'jump (lambda nil (not (dsf/get-list-entry))))
+          (dsf/set-disable-action 'jump '(dsf/list-is-empty))
 
           (dsf/show-screen)
         )
       ))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -404,6 +410,7 @@
         (god/install-device))
       )
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -418,14 +425,14 @@
       )))
       (dsf/set-default-action 'select)
       (dsf/set-no-save 'force true)
-      (dsf/set-disable-action 'force (lambda nil (not (dsf/get-item))))
+      (dsf/set-disable-action 'force '(dsf/list-is-empty))
 
       (dsf/add-action 'normal "Normal Install" 'N (lambda nil (block (result)
         (setq result (god/install-item (dsf/get-item) true true))
         (dsf/notify (item result 1))
       )))
       (dsf/set-no-save 'normal true)
-      (dsf/set-disable-action 'normal (lambda nil (not (dsf/get-item))))
+      (dsf/set-disable-action 'normal '(dsf/list-is-empty))
 
       (dsf/add-action 'add "Add More Devices" 'A (lambda nil (block nil
         (dsf/new-screen 'device-browser "Device Browser")
@@ -452,6 +459,7 @@
         (scrShowScreen gScreen "&dsRemoveDevice;")
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -473,6 +481,7 @@
         (scrShowScreen gScreen "&dsRepairArmor;")
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -502,10 +511,11 @@
           )
         ))
         (dsf/set-no-save 'repair true)
-        (dsf/set-disable-action 'repair (lambda nil (not (dsf/get-item))))
+        (dsf/set-disable-action 'repair '(dsf/list-is-empty))
         (dsf/show-screen)
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -521,18 +531,19 @@
       (dsf/add-action 'select "Select" 'S (lambda nil (block nil
         (dsf/new-screen 'repair-item "Repair Item" 'itempicker)
         (dsf/set-item-filter "*d~mUN")
-        (dsf/add-action 'repair "Damage" 'D (lambda nil
+        (dsf/add-action 'damage "Damage" 'D (lambda nil
           (block (itm)
             (shpDamageItem gPlayerShip (dsf/get-item))
             (dsf/notify "Damaged Item")
             ;(dsf/show-screen)
           )
         ))
-        (dsf/set-no-save 'repair true)
-        (dsf/set-disable-action 'repair (lambda nil (not (dsf/get-item))))
+        (dsf/set-no-save 'damage true)
+        (dsf/set-disable-action 'damage '(dsf/list-is-empty))
         (dsf/show-screen)
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -552,6 +563,7 @@
         (dsf/notify "Mapped system")
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -590,6 +602,7 @@
         )
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -616,6 +629,7 @@
         )
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -642,6 +656,7 @@
         )
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -669,6 +684,7 @@
         )
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -697,6 +713,7 @@
         )
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -725,6 +742,7 @@
         )
       )))
       (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -754,6 +772,7 @@
         ))
       )
       (dsf/set-default-action 'toggle-time)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
     ))
   ))
 
@@ -844,6 +863,7 @@
   <Globals>
     (block Nil
 
+;;; ITEM BROWSER  {{{
 
     ;; rewrite this screen to identify all items by default and un-id them on the way out
     (setq god/item-browser (lambda (criteria)
@@ -874,7 +894,7 @@
           )
         ))
         (dsf/set-no-save 'add-to-cargo true)
-        (dsf/set-disable-action 'add-to-cargo (lambda nil (not (dsf/get-item))))
+        (dsf/set-disable-action 'add-to-cargo '(dsf/list-is-empty))
         (dsf/set-default-action 'add-to-cargo)
 
         (dsf/add-action 'install "Install Item" 'N (lambda nil
@@ -913,6 +933,10 @@
         ;(dsf/set-disable-action 'identify-all (lambda nil (not (dsf/get-item))))
       )
     ))
+
+;;; END ITEM BROWSER  }}}
+
+;;; REFUEL / RESTORE  {{{
 
     (setq god/refuel-player (lambda nil
       ;; pump it full of Longzhu's
@@ -956,6 +980,9 @@
 
       )
     ))
+;;; END REFUEL / RESTORE  }}}
+
+;;; INSTALL ITEM {{{
 
     ;; Install an item, using the normal rules, or forcefully.
     ;; We return a tuple with an code and a message
@@ -1034,6 +1061,8 @@
         result
       )
     ))
+
+;;; END INSTALL ITEM }}}
 
     )
   </Globals>
