@@ -19,15 +19,12 @@
   License:
     Public Domain - alterecco@gmail.com
 
-
   Bugs:
     Wolfy 12/1/2011
       On Replace Armor screen:
         "No binding for symbol gCheckMilitaryID ###(and gCheckMilitaryID (itmHasModifier..."
       Spawn Objects
         - Add more info in subtitle?
-
-
 
 -->
 
@@ -222,6 +219,60 @@
 
       (dsf/show-screen 'ship-select)
     )
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - SPAWN STATIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       3)
+    (title        "Spawn Stations")
+    (subtitle     "Browse and spawn any station in the game")
+    (on-select    (block nil
+      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+        (dsf/new-screen 'spawn-station "Spawn Station" 'custompicker)
+        (dsf/filter-screen)
+
+        (dsf/set-description "\n\nSpawn a single station ten ls due north from you")
+
+        ;; add stations to the list
+        (enum (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
+          (dsf/add-list-entry (list
+            (list 'title      (typGetDataField unid 'name))
+            (list 'subtitle   (cat "Level: " (typGetDataField unid 'level)))
+            (list 'unid       unid)
+            (list 'level      (typGetDataField unid 'level))
+          ))
+        )
+        (dsf/add-list-filter (lambda (entries)
+          (fn/sort entries a b (gr (dsf/get a 'level) (dsf/get b 'level)))
+        ))
+
+        (dsf/add-action 'friendly "As Commonwealth" 'C (lambda nil
+          (block (unid obj)
+            (setq unid (dsf/get-list-entry 'unid))
+            (setq obj (sysCreateStation unid (sysVectorPolarOffset gPlayerShip 90 10)))
+            (objSetSovereign obj &svCommonwealth;)
+            (dsf/notify "Spawned Friendly Station")
+          )
+        ))
+        (dsf/set-default-action 'friendly)
+        (dsf/set-disable-action 'friendly '(dsf/list-is-empty))
+        (dsf/add-action 'enemy "As DestructiveChaos" 'D (lambda nil
+          (block (unid obj)
+            (setq unid (dsf/get-list-entry 'unid))
+            (setq obj (sysCreateStation unid (sysVectorPolarOffset gPlayerShip 90 10)))
+            (objSetSovereign obj &svDestructiveChaos;)
+            (dsf/notify "Spawned Enemy Station")
+          )
+        ))
+        (dsf/set-disable-action 'enemy '(dsf/list-is-empty))
+        (dsf/show-screen)
+      )))
+      (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
+    ))
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
