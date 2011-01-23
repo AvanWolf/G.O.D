@@ -141,7 +141,7 @@
       )))
       (dsf/add-action 'select "Select" 'S (lambda nil
         (block nil
-          (dsf/session-set 'count (fn/constrain (dsf/get-counter) 1))
+          (dsf/session-set 'count (dsf/get-counter 1))
           (dsf/show-screen 'spawn-behaviour)
         )
       ))
@@ -314,6 +314,7 @@
           (dsf/filter-screen)
 
           ;; TODO build a much more advanced system list (in correct order)
+
           ;; sort by level
           (setq systems (fn/sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
           ;; filter out endgame (or any others systems with no gates)
@@ -579,7 +580,7 @@
       (dsf/add-action 'select "Select" 'S (lambda nil (block nil
         (if (eq (dsf/get-pane) 'counter)
           (block (radius criteria wrecks (cnt 0))
-            (setq radius (fn/constrain (dsf/get-counter) 0 1000))
+            (setq radius (dsf/get-counter 0 1000))
             (setq criteria (cat "sTN:" radius))
             (setq wrecks (filter (sysFindObject gPlayerShip criteria) obj
               (or (objHasAttribute obj "shipwreck") (eq (objGetVisibleDamage obj) 100) (strFind (objGetName obj) "wreck"))
@@ -645,7 +646,7 @@
       (dsf/add-action 'select "Select" 'S (lambda nil (block nil
         (if (eq (dsf/get-pane) 'counter)
           (block (credits)
-            (plyCredit gPlayer (setq credits (fn/constrain (dsf/get-counter) 0 10000000)))
+            (plyCredit gPlayer (setq credits (dsf/get-counter 0 10000000)))
             (dsf/set-pane 'default)
             (dsf/notify (cat "Added " credits " credits to your account"))
           )
@@ -673,7 +674,7 @@
         (setq mx (plyGetCredits gPlayer))
         (if (eq (dsf/get-pane) 'counter)
           (block (credits)
-            (plyCharge gPlayer (setq credits (fn/constrain (dsf/get-counter) 0 mx)))
+            (plyCharge gPlayer (setq credits (dsf/get-counter 0 mx)))
             (dsf/set-pane 'default)
             (dsf/notify (cat "Withdrew " credits " credits from your account"))
           )
@@ -701,7 +702,7 @@
         (setq rins (or (objGetData gPlayerShip 'rins) 0))
         (if (eq (dsf/get-pane) 'counter)
           (block (credit)
-            (setq rins (add rins (setq credit (fn/constrain (dsf/get-counter) 0 10000000))))
+            (setq rins (add rins (setq credit (dsf/get-counter 0 10000000))))
             (objSetData gPlayerShip 'rins rins)
             (dsf/set-pane 'default)
             (dsf/notify (cat "Added " credit " rins to your account. You now have " rins " rins"))
@@ -730,7 +731,7 @@
         (setq rins (objGetData gPlayerShip 'rins))
         (if (eq (dsf/get-pane) 'counter)
           (block (credit)
-            (setq rins (subtract rins (setq credit (fn/constrain (dsf/get-counter) 0 rins))))
+            (setq rins (subtract rins (setq credit (dsf/get-counter 0 rins))))
             (objSetData gPlayerShip 'rins rins)
             (dsf/set-pane 'default)
             (dsf/notify (cat "Withdraw " credit " rins from your account. You now have " rins " rins"))

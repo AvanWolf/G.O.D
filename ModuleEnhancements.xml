@@ -174,7 +174,7 @@ TODO
       (dsf/set-pane 'Counter)
 
       (dsf/add-action 'select 'Select 'S (lambda nil (block (pow hex)
-        (setq pow (fn/constrain (dsf/get-counter) 0 15))
+        (setq pow (dsf/get-counter 0 15))
         (setq hex (dsf/session-get 'enhancement-hex))
         (setq hex (add hex pow))
         (dsf/session-set 'enhancement-hex hex)
