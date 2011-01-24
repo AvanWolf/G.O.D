@@ -25,7 +25,7 @@ TODO
         (title      "Apply Enhancement")
         (subtitle   "Because a +fast Ares Archcannon works wonders!")
         (on-select  (block nil
-          (dsf/add-action 'select "Select" 'S (lambda nil
+          (dsf/add-action 'select '("Select" 'S) (lambda nil
             (god/enhance-item)
           ))
           (dsf/set-default-action 'select)
@@ -41,7 +41,7 @@ TODO
           do-hide
         ))
         (on-select    (block nil
-          (dsf/add-action 'select "Select" 'S (lambda nil
+          (dsf/add-action 'select '("Select" 'S) (lambda nil
             (block nil
               (dsf/new-screen 'analyze-enhancement "Analyze Enhancement" 'itempicker)
               (dsf/set-item-filter "swa")
@@ -93,7 +93,7 @@ TODO
       (dsf/set-description "Select an item you want to enhance")
       (dsf/set-item-filter "swa")
 
-      (dsf/add-action 'select "Select" 'S (lambda nil (block (itm criteria)
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block (itm criteria)
         (setq itm (dsf/get-item))
         (dsf/session-set 'enhancement-item itm)
         (setq criteria (fn/int-to-criteria (itmGetCategory itm)))
@@ -124,7 +124,7 @@ TODO
         ))
       )
 
-      (dsf/add-action 'select "Select" 'S (lambda nil (block (type)
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block (type)
         (dsf/session-set 'enhancement-hex (dsf/get-list-entry 'hex))
         (setq type (dsf/get-list-entry 'type))
 
@@ -152,7 +152,7 @@ TODO
         (list 'damagetype i)
       )))
 
-      (dsf/add-action 'select "Select" 'S (lambda nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block (damagetype hex)
           (setq damagetype (dsf/get-list-entry 'damagetype))
           (setq hex (dsf/session-get 'enhancement-hex))
@@ -173,7 +173,7 @@ TODO
       (dsf/set-description "Choose the power of the enhancement. Can be a number from 0 to 15")
       (dsf/set-pane 'Counter)
 
-      (dsf/add-action 'select 'Select 'S (lambda nil (block (pow hex)
+      (dsf/add-action 'select '('Select 'S) (lambda nil (block (pow hex)
         (setq pow (dsf/get-counter 0 15))
         (setq hex (dsf/session-get 'enhancement-hex))
         (setq hex (add hex pow))
@@ -199,12 +199,12 @@ TODO
         )
       )))
 
-      (dsf/add-action 'more "Enhance More" 'M (lambda nil
+      (dsf/add-action 'more '("Enhance More" 'M) (lambda nil
         (god/enhance-item)
       ))
       (dsf/set-no-save 'more)
 
-      (dsf/add-action 'return "Return to Main" 'R (lambda nil
+      (dsf/add-action 'return '("Return to Main" 'R) (lambda nil
         (god/core-screen)
       ))
       (dsf/set-default-action 'return)

@@ -54,7 +54,7 @@
     (title        "Refuel")
     (subtitle     "Refuel your reactor.\nIf it is not fully refueled, contact me!")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (god/refuel-player)
         (dsf/notify "Your Reactor has been refueled")
       )))
@@ -78,7 +78,7 @@
       "Credits for this function goes to PM from Transcendence Forums!"
     ))
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (god/restore-target gPlayerShip)
         (dsf/notify "Restored your ship")
       )))
@@ -96,7 +96,7 @@
     (title        "Spawn Ships")
     (subtitle     "Browse and spawn any ship in game. Make them your friends, enemies or wingmen")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/spawn-ships)
       )))
       (dsf/set-default-action 'select)
@@ -122,7 +122,7 @@
       (dsf/add-list-filter (lambda (entries)
         (fn/sort entries a b (gr (dsf/get a 'level) (dsf/get b 'level)))
       ))
-      (dsf/add-action 'select "Select" 'S (lambda nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block nil
           (dsf/session-set 'unid (dsf/get-list-entry 'unid))
           (dsf/show-screen 'spawn-count)
@@ -139,7 +139,7 @@
         (setq unid (dsf/session-get 'unid))
         (cat "Select how many of the type \"" (typGetDataField unid 'name) "\" you want to spawn")
       )))
-      (dsf/add-action 'select "Select" 'S (lambda nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block nil
           (dsf/session-set 'count (dsf/get-counter 1))
           (dsf/show-screen 'spawn-behaviour)
@@ -210,12 +210,12 @@
           ))
         )
       ))
-      (dsf/add-action 'spawn "Spawn And Exit" 'S (lambda nil (block nil
+      (dsf/add-action 'spawn '("Spawn And Exit" 'S) (lambda nil (block nil
         (spawn)
         (dsf/exit 'force)
       )))
       (dsf/set-default-action 'spawn)
-      (dsf/add-action 'spawn-more "Spawn and Add More" 'A (lambda nil (block nil
+      (dsf/add-action 'spawn-more '("Spawn and Add More" 'A) (lambda nil (block nil
         (spawn)
         (dsf/show-screen 'spawn-select)
       )))
@@ -233,7 +233,7 @@
     (title        "Spawn Stations")
     (subtitle     "Browse and spawn any station in the game")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/new-screen 'spawn-station "Spawn Station" 'custompicker)
         (dsf/filter-screen)
 
@@ -252,7 +252,7 @@
           (fn/sort entries a b (gr (dsf/get a 'level) (dsf/get b 'level)))
         ))
 
-        (dsf/add-action 'friendly "As Commonwealth" 'C (lambda nil
+        (dsf/add-action 'friendly '("As Commonwealth" 'C) (lambda nil
           (block (unid obj)
             (setq unid (dsf/get-list-entry 'unid))
             (setq obj (sysCreateStation unid (sysVectorPolarOffset gPlayerShip 90 10)))
@@ -262,7 +262,7 @@
         ))
         (dsf/set-default-action 'friendly)
         (dsf/set-disable-action 'friendly '(dsf/list-is-empty))
-        (dsf/add-action 'enemy "As DestructiveChaos" 'D (lambda nil
+        (dsf/add-action 'enemy '("As DestructiveChaos" 'D) (lambda nil
           (block (unid obj)
             (setq unid (dsf/get-list-entry 'unid))
             (setq obj (sysCreateStation unid (sysVectorPolarOffset gPlayerShip 90 10)))
@@ -287,7 +287,7 @@
     (title        "Browse Items")
     (subtitle     "Browse and search all items in game. Add some to your cargo hold, or install them directly")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/new-screen 'item-browser "Item Browser")
         (god/item-browser "*")
         (dsf/show-screen)
@@ -306,7 +306,7 @@
     (title      "Travel Galaxy")
     (subtitle   "Journey instantly to another system in this galaxy")
     (on-select  (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block ((systems (sysGetNodes))
                 (current (sysGetNode)))
 
@@ -328,7 +328,7 @@
             ))
           ))
 
-          (dsf/add-action 'gate "Select" 'S (lambda nil (block (node gate)
+          (dsf/add-action 'gate '("Select" 'S) (lambda nil (block (node gate)
             (setq node (dsf/get-list-entry 'node))
             (setq gate (item (sysGetStargates node) 0))
             (dsf/on-global-exit (lambda nil (block nil
@@ -353,14 +353,14 @@
     (title      "Travel Current System")
     (subtitle   "Journey instantly to another place in this system")
     (on-select  (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block nil
 
           (dsf/new-screen 'travel-system "Travel System")
           (dsf/screen-set 'default-filter-term "TAMF")
           (dsf/object-browser)
 
-          (dsf/add-action 'jump "Select" 'S (lambda nil
+          (dsf/add-action 'jump '("Select" 'S) (lambda nil
             (block (o)
               (setq o (dsf/get-list-entry 'obj))
               (objJumpTo gPlayerShip (sysVectorRandom (objGetPos o) 8 4 "*"))
@@ -407,7 +407,7 @@
     (title        "Install Device")
     (subtitle     "Install any device you have in your cargo hold. You can choose between installing it in the regular way, or forcefully")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
         (god/install-device))
       )
       (dsf/set-default-action 'select)
@@ -420,7 +420,7 @@
       (dsf/new-screen 'install-device "Install Device" 'itempicker)
       (dsf/set-item-filter "dUN")
 
-      (dsf/add-action 'force "Force Install" 'F (lambda nil (block (result)
+      (dsf/add-action 'force '("Force Install" 'F) (lambda nil (block (result)
         (setq result (god/install-item (dsf/get-item) nil true))
         (dsf/notify (item result 1))
       )))
@@ -428,14 +428,14 @@
       (dsf/set-no-save 'force true)
       (dsf/set-disable-action 'force '(dsf/list-is-empty))
 
-      (dsf/add-action 'normal "Normal Install" 'N (lambda nil (block (result)
+      (dsf/add-action 'normal '("Normal Install" 'N) (lambda nil (block (result)
         (setq result (god/install-item (dsf/get-item) true true))
         (dsf/notify (item result 1))
       )))
       (dsf/set-no-save 'normal true)
       (dsf/set-disable-action 'normal '(dsf/list-is-empty))
 
-      (dsf/add-action 'add "Add More Devices" 'A (lambda nil (block nil
+      (dsf/add-action 'add '("Add More Devices" 'A) (lambda nil (block nil
         (dsf/new-screen 'device-browser "Device Browser")
         (god/item-browser "d")
         (dsf/show-screen)
@@ -453,7 +453,7 @@
     (title        "Remove Device")
     (subtitle     "Remove any device you have installed on your ship")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (setq gPrevScreen (-dsf/get-screen-unid))
         (setq gPrevPane "Default")
         (setq gMargin 0)
@@ -473,7 +473,7 @@
     (title        "Repair or Replace Armor")
     (subtitle     "Fix up your armor, or replace segments")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (setq gPrevScreen (-dsf/get-screen-unid))
         (setq gPrevPane "Default")
         (setq gTechLevel 15)
@@ -501,10 +501,10 @@
       do-hide
     ))
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/new-screen 'repair-item "Repair Item" 'itempicker)
         (dsf/set-item-filter "*d~mUD")
-        (dsf/add-action 'repair "Repair" 'R (lambda nil
+        (dsf/add-action 'repair '("Repair" 'R) (lambda nil
           (block (itm)
             (shpRepairItem gPlayerShip (dsf/get-item))
             (dsf/notify "Repaired Item")
@@ -529,10 +529,10 @@
     (title        "Damage Item")
     (subtitle     "Damage an item... just because")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/new-screen 'repair-item "Repair Item" 'itempicker)
         (dsf/set-item-filter "*d~mUN")
-        (dsf/add-action 'damage "Damage" 'D (lambda nil
+        (dsf/add-action 'damage '("Damage" 'D) (lambda nil
           (block (itm)
             (shpDamageItem gPlayerShip (dsf/get-item))
             (dsf/notify "Damaged Item")
@@ -557,7 +557,7 @@
     (title        "Map System")
     (subtitle     "Reveal location on map of every station in the current system")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (enum (sysFindObject gSource "Ts") obj
             (objSetKnown obj)
         )
@@ -577,7 +577,7 @@
     (title        "Loot All")
     (subtitle     "Loot all items in wrecks within a certain radius in ls\n(Note: this does not respect your cargo limit)")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (if (eq (dsf/get-pane) 'counter)
           (block (radius criteria wrecks (cnt 0))
             (setq radius (dsf/get-counter 0 1000))
@@ -616,7 +616,7 @@
     (title        "Jettison All")
     (subtitle     "Jettison all items in your hold")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block (items)
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block (items)
         (if (setq items (objGetItems gPlayerShip "*U"))
           (block (dest)
             (setq dest (sysCreateStation &stCargoCrate; (sysVectorPolarOffset gPlayerShip 0 2)))
@@ -643,7 +643,7 @@
     (title        "Banking - Deposit Credits")
     (subtitle     "Add credits to your account")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (if (eq (dsf/get-pane) 'counter)
           (block (credits)
             (plyCredit gPlayer (setq credits (dsf/get-counter 0 10000000)))
@@ -670,7 +670,7 @@
     (title        "Banking - Withdraw Credits")
     (subtitle     "Remove credits from your account")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block (mx)
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block (mx)
         (setq mx (plyGetCredits gPlayer))
         (if (eq (dsf/get-pane) 'counter)
           (block (credits)
@@ -698,7 +698,7 @@
     (title        "Banking - Deposit Rins")
     (subtitle     "Add rins to your account")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block (rins)
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block (rins)
         (setq rins (or (objGetData gPlayerShip 'rins) 0))
         (if (eq (dsf/get-pane) 'counter)
           (block (credit)
@@ -727,7 +727,7 @@
     (title        "Banking - Withdraw Rins")
     (subtitle     "Remove rins from your account")
     (on-select    (block nil
-      (dsf/add-action 'select "Select" 'S (lambda nil (block (rins)
+      (dsf/add-action 'select '("Select" 'S) (lambda nil (block (rins)
         (setq rins (objGetData gPlayerShip 'rins))
         (if (eq (dsf/get-pane) 'counter)
           (block (credit)
@@ -755,25 +755,31 @@
     (weight     9)
     (title      "Time Stop")
     (subtitle   "Stop time and start it again. Great for taking a look around")
-    (on-select  (block (state)
-      (setq state (typGetGlobalData &ovGODTimeStop; 'keep-running))
+    (on-select  (block nil
       (dsf/add-action 'toggle-time
-        (if state "Start Time" "Stop Time") 'S
-        (lambda nil (if state
-          (block nil
-            (typSetGlobalData &ovGODTimeStop; 'keep-running nil)
-            (dsf/set-action-label 'toggle-time "Stop Time")
-            (dsf/notify "Started time")
+        (lambda nil (block (state)
+          (setq state (typGetGlobalData &ovGODTimeStop; 'keep-running))
+          (if state
+            (list "Start Time" 'S)
+            (list "Stop Time" 'S)
           )
-          (block nil
-            (typSetGlobalData &ovGODTimeStop; 'keep-running true)
-            (dsf/set-action-label 'toggle-time "Start Time")
-            (dsf/notify "Stopped time")
+        ))
+        (lambda nil (block (state)
+          (setq state (typGetGlobalData &ovGODTimeStop; 'keep-running))
+          (if state
+            (block nil
+              (typSetGlobalData &ovGODTimeStop; 'keep-running nil)
+              (dsf/notify "Started time")
+            )
+            (block nil
+              (typSetGlobalData &ovGODTimeStop; 'keep-running true)
+              (dsf/notify "Stopped time")
+            )
           )
         ))
       )
       (dsf/set-default-action 'toggle-time)
-      (dsf/set-disable-action 'select '(dsf/list-is-empty))
+      (dsf/set-disable-action 'toggle-time '(dsf/list-is-empty))
     ))
   ))
 
@@ -871,7 +877,7 @@
       (block nil
         (dsf/item-browser (map (itmGetTypes criteria) itm (itmCreate itm 1)))
 
-        (dsf/add-action 'add-to-cargo "Add to Cargo Hold" 'A (lambda nil
+        (dsf/add-action 'add-to-cargo '("Add to Cargo Hold" 'A) (lambda nil
           (block nil
             (if (eq (dsf/get-pane) 'counter)
               (block (cnt itm inventory)
@@ -880,15 +886,13 @@
                 (setq itm (itmCreate (itmGetType (dsf/get-item)) cnt))
                 (objAddItem gPlayerShip itm)
                 (dsf/set-pane 'default)
-                (dsf/set-action-label 'add-to-cargo "Add to Cargo Hold")
-                (dsf/set-action-key 'add-to-cargo 'A)
+                (dsf/set-action-label 'add-to-cargo '("Add to Cargo Hold" 'A))
                 (dsf/notify "Your request has been fulfilled")
               )
               (block nil
                 (dsf/set-pane 'counter)
                 (dsf/set-counter 1)
-                (dsf/set-action-label 'add-to-cargo "Accept Transaction")
-                (dsf/set-action-key 'add-to-cargo 'A)
+                (dsf/set-action-label 'add-to-cargo '("Accept Transaction" 'A))
                 (dsf/notify (cat "Select the amount of \"" (itmGetName (dsf/get-item) 3) "\" you want to add to your cargo hold"))
               )
             )
@@ -898,7 +902,7 @@
         (dsf/set-disable-action 'add-to-cargo '(dsf/list-is-empty))
         (dsf/set-default-action 'add-to-cargo)
 
-        (dsf/add-action 'install "Install Item" 'N (lambda nil
+        (dsf/add-action 'install '("Install Item" 'N) (lambda nil
           (block (itm result)
             (setq itm (dsf/get-item))
             (setq result (god/install-item itm nil nil))

@@ -19,7 +19,7 @@
         (subtitle   "Do various things to your current target")
         (hide       (not (objGetTarget gPlayerShip)))
         (on-select  (block nil
-          (dsf/add-action 'select 'Select 'S (lambda nil
+          (dsf/add-action 'select '('Select 'S) (lambda nil
             (god/target-screen)
           ))
           (dsf/set-default-action 'select)
@@ -40,7 +40,7 @@
           (subtitle   "Completely restore target")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+              (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
                 (god/restore-target target)
                 (dsf/notify "Restored target")
               )))
@@ -53,7 +53,7 @@
           (subtitle   "Inspect what your target is equipped with and has in it's cargo hold")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/add-action 'select 'Select 'S (lambda nil (block nil
+              (dsf/add-action 'select '('Select 'S) (lambda nil (block nil
                 (dsf/new-screen 'target-inspector "Object Inspector")
                 (god/object-inspector target)
 
@@ -114,7 +114,7 @@
           (subtitle   "Make your target work for you")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+              (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
                 (shpCancelOrders target)
                 (objSetSovereign target &svIndependent;)
                 (objSetEventHandler target &baStdWingmanBase;)
@@ -130,7 +130,7 @@
           (subtitle   "Change the mision of your target")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/add-action 'select "Select" 'S (lambda nil
+              (dsf/add-action 'select '("Select" 'S) (lambda nil
                 (god/target-orders target)
               ))
               (dsf/set-default-action 'select)
@@ -156,7 +156,7 @@
           (subtitle   "Just get rid of it")
           (on-select  (block (target)
             (if (setq target (objGetTarget gPlayerShip)) (block nil
-              (dsf/add-action 'select "Select" 'S (lambda nil (block nil
+              (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
                 (objDestroy target)
                 (dsf/screen-delete 'initial-item)
                 (dsf/back)
@@ -200,7 +200,7 @@
               (dsf/screen-set 'filter-source (objGetTarget gPlayerShip))
               (dsf/screen-set 'default-filter-term "sTE")
               (dsf/object-browser)
-              (dsf/add-action 'attack "Attack" 'A (lambda nil
+              (dsf/add-action 'attack '("Attack" 'A) (lambda nil
                 (block (t)
                   (setq t (objGetTarget gPlayerShip))
                   (shpCancelOrders t)
@@ -290,7 +290,7 @@
           ;)
         ))
 
-        (dsf/add-action 'select "Select" 'S (lambda nil
+        (dsf/add-action 'select '("Select" 'S) (lambda nil
           (block nil
             (dsf/eval (dsf/get-list-entry 'run))
           )
