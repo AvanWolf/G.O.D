@@ -891,7 +891,7 @@
               )
               (block nil
                 (dsf/set-pane 'counter)
-                (dsf/set-counter 1)
+                (dsf/set-default-counter 1)
                 (dsf/set-action-handle 'add-to-cargo '("Accept Transaction" 'A))
                 (dsf/notify (cat "Select the amount of \"" (itmGetName (dsf/get-item) 3) "\" you want to add to your cargo hold"))
               )
