@@ -1,14 +1,6 @@
 <?xml version="1.0" ?>
-<!DOCTYPE TranscendenceExtension
-[
-    <!ENTITY modGODModuleTarget         "0xDCBA0511">
-]>
 
-<TranscendenceExtension
-  UNID="&modGODModuleTarget;"
-  name="G.O.D. Module - Target"
-  credits="alterecco"
-  version="1.0">
+<TranscendenceModule>
 
   <Globals>
     (block (module)
@@ -366,7 +358,7 @@
 
     )
   </Globals>
-</TranscendenceExtension>
+</TranscendenceModule>
 <!--
 vim:ts=2:sw=2:sts=2:ft=tscript:
 -->

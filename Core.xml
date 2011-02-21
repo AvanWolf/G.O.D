@@ -1071,6 +1071,12 @@
 
     )
   </Globals>
+
+  <Modules>
+    <Module filename="ModuleTarget.xml"/>
+    <Module filename="ModuleEnhancements.xml"/>
+  </Modules>
+
 </TranscendenceExtension>
 <!--
 vim:ts=2:sw=2:sts=2:ft=tscript:
