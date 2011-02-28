@@ -48,25 +48,6 @@
               (dsf/add-action 'select '('Select 'S) (lambda nil (block nil
                 (dsf/new-screen 'target-inspector "Object Inspector")
                 (god/object-inspector target)
-
-                ;; TODO: i would like this to be shown as well...
-                ;; atm the description provided by object-inspector overrides completely
-                ;(dsf/description (lambda nil (block nil
-                ;  (if (itmIsInstalled (dsf/item))
-                ;    "Installed"
-                ;    "Not Installed"
-                ;  )
-                ;)))
-
-                ;(dsf/action 'remove "Remove Item" 'R (lambda nil
-                ;  (block nil
-                ;    (objRemoveItem target (dsf/item))
-                ;    (dsf/data-remove 'initial-item)
-                ;    (dsf/show-screen)
-                ;    (dsf/description "Removed item")
-                ;  )
-                ;))
-                ;(dsf/hide-action 'remove (lambda nil (itmIsInstalled (dsf/item))))
                 (dsf/show-screen)
               )))
               (dsf/set-default-action 'select)
@@ -208,10 +189,8 @@
             (subtitle   "Cancel ships current orders")
             (run        (block nil
               (shpCancelOrders (objGetTarget gPlayerShip))
+              (dsf/notify "Cancelled Orders")
               (dsf/show-screen)
-              ;; TODO: I would like a way to show one time description updates
-              ;; this one actually overrides the current description i have :/
-              ;; (dsf/description "Cancelled Orders")
             ))
           )
           ;'((title      "Orbit")
@@ -306,37 +285,9 @@
     (setq god/object-inspector (lambda (obj)
       (block (get-criteria)
 
-        (setq get-criteria (lambda nil
-          (fn/split (or (dsf/screen-get 'filter-term) "*") "/")
-        ))
-
         (dsf/set-data-from obj)
 
         (dsf/set-type 'itempicker)
-
-        ;; calculate the amount of items on the screen
-        (dsf/on-screen-init (lambda nil (block ((cnt 0) criteria)
-          (setq criteria (get-criteria))
-          (objEnumItems obj "*" itm
-            (if (and
-                (itmMatches itm (item criteria 0))
-                (if (item criteria 1) (find (itmGetName itm 0) (item criteria 1)) true))
-              (setq cnt (add cnt 1))
-            )
-          )
-          ;; we have to run the filter once manually, to get the right count
-          (dsf/screen-set 'item-count cnt)
-        )))
-
-        (dsf/set-item-filter (lambda nil (block (criteria)
-          (setq criteria (get-criteria))
-          (lambda (itm) (and
-            (itmMatches itm (item criteria 0))
-            (if (item criteria 1) (find (itmGetName itm 0) (item criteria 1)) true)
-          ))
-        )))
-
-        (-dsf/filter-description "*")
 
         (dsf/on-run-action (lambda nil (block (itm)
           (if (setq itm (dsf/item))
@@ -352,7 +303,54 @@
           )
         )))
 
-        (-dsf/filter-action)
+        (dsf/add-action 'install '("Install Device" 'I) (lambda nil
+          (block nil
+            (dsf/new-screen 'install-device "Install Device")
+            (dsf/item-browser (map (itmGetTypes "d") itm (itmCreate itm 1)))
+            (dsf/add-action 'select '("Install" 'I) (lambda nil
+              (block (itm result)
+                (setq itm (dsf/get-item))
+                ;; if it is not identified, then do so now
+                (if (not (itmIsKnown itm))
+                  (itmSetKnown itm)
+                )
+                (setq result (god/install-item itm nil nil obj))
+                (dsf/notify (item result 1))
+              )
+            ))
+            (dsf/set-no-save 'select)
+            (dsf/show-screen)
+          )
+        ))
+
+        (dsf/add-action 'additem '("Add to Cargo Hold" 'A) (lambda nil
+          (block nil
+            (dsf/new-screen 'add-to-cargo-hold "Add to Cargo Hold")
+            (dsf/item-browser (map (itmGetTypes "*") itm (itmCreate itm 1)))
+            (god/add-to-cargo-action 'add-to-cargo obj)
+            (dsf/show-screen)
+          )
+        ))
+
+        (dsf/add-action 'remove (lambda nil
+          (block nil
+          )
+        ))
+        (dsf/set-action-handle 'remove (lambda nil
+          (block (itm)
+            (setq itm (dsf/get-item))
+            (switch
+              (and (itmMatches itm "d") (itmIsInstalled itm))
+                '("Remove Device" 'R)
+              (and (itmMatches itm "a") (itmIsInstalled itm))
+                '("Replace Armor" 'R)
+              '("Remove Item" 'R)
+            )
+          )
+        ))
+        (dsf/set-no-save 'remove)
+
+
       )
     ))
 
