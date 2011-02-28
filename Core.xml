@@ -836,7 +836,7 @@
     virtual=        "true"
     usekey=         "G"
     >
-    <Image imageID="&rsItems1;" imageX="0" imageY="192" imageWidth="96" imageHeight="96"/>
+    <Image imageID="&rsItems1;" imageX="0" imageY="576" imageWidth="96" imageHeight="96"/>
     <Invoke>
       (god/core-screen)
     </Invoke>
