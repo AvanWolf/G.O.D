@@ -904,6 +904,9 @@
         (dsf/add-action 'install '("Install Item" 'N) (lambda nil
           (block (itm result)
             (setq itm (dsf/get-item))
+            (if (not (itmIsKnown itm))
+              (itmSetKnown itm)
+            )
             (setq result (god/install-item itm nil nil))
             (dsf/notify (item result 1))
           )
