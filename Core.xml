@@ -872,34 +872,33 @@
 
 ;;; ITEM BROWSER  {{{
 
-    ;; rewrite this screen to identify all items by default and un-id them on the way out
+    ;; TODO rewrite this screen to identify all items by default and un-id them on the way out
     (setq god/item-browser (lambda (criteria)
       (block nil
         (dsf/item-browser (map (itmGetTypes criteria) itm (itmCreate itm 1)))
 
-        (dsf/add-action 'add-to-cargo '("Add to Cargo Hold" 'A) (lambda nil
-          (block nil
-            (if (eq (dsf/get-pane) 'counter)
-              (block (cnt itm inventory)
-                ;; add item
-                (setq cnt (dsf/get-counter))
-                (setq itm (itmCreate (itmGetType (dsf/get-item)) cnt))
-                (objAddItem gPlayerShip itm)
-                (dsf/set-pane 'default)
-                (dsf/set-action-handle 'add-to-cargo '("Add to Cargo Hold" 'A))
-                (dsf/notify "Your request has been fulfilled")
-              )
-              (block nil
-                (dsf/set-pane 'counter)
-                (dsf/set-default-counter 1)
-                (dsf/set-action-handle 'add-to-cargo '("Accept Transaction" 'A))
-                (dsf/notify (cat "Select the amount of \"" (itmGetName (dsf/get-item) 3) "\" you want to add to your cargo hold"))
-              )
-            )
-          )
-        ))
-        (dsf/set-no-save 'add-to-cargo true)
-        (dsf/set-disable-action 'add-to-cargo '(dsf/list-is-empty))
+        (god/add-to-cargo-action 'add-to-cargo gPlayerShip)
+        ;(dsf/add-action 'add-to-cargo '("Add to Cargo Hold" 'A) (lambda nil
+        ;  (block nil
+        ;    (if (eq (dsf/get-pane) 'counter)
+        ;      (block (cnt itm inventory)
+        ;        ;; add item
+        ;        (setq cnt (dsf/get-counter))
+        ;        (setq itm (itmCreate (itmGetType (dsf/get-item)) cnt))
+        ;        (objAddItem gPlayerShip itm)
+        ;        (dsf/set-pane 'default)
+        ;        (dsf/set-action-handle 'add-to-cargo '("Add to Cargo Hold" 'A))
+        ;        (dsf/notify "Your request has been fulfilled")
+        ;      )
+        ;      (block nil
+        ;        (dsf/set-pane 'counter)
+        ;        (dsf/set-default-counter 1)
+        ;        (dsf/set-action-handle 'add-to-cargo '("Accept Transaction" 'A))
+        ;        (dsf/notify (cat "Select the amount of \"" (itmGetName (dsf/get-item) 3) "\" you want to add to your cargo hold"))
+        ;      )
+        ;    )
+        ;  )
+        ;))
         (dsf/set-default-action 'add-to-cargo)
 
         (dsf/add-action 'install '("Install Item" 'N) (lambda nil
@@ -986,6 +985,40 @@
       )
     ))
 ;;; END REFUEL / RESTORE  }}}
+
+;;; ADD TO CARGO ACTION  {{{
+
+  ;; TODO perhaps this can be abstracted into a general purpose
+  ;;      "set count" screen
+  (setq god/add-to-cargo-action (lambda (label target)
+    (block nil
+      (dsf/add-action label '("Add to Cargo Hold" 'A) (lambda nil
+        (block nil
+          (if (eq (dsf/get-pane) 'counter)
+            (block (cnt itm)
+              ;; add item
+              (setq cnt (dsf/get-counter))
+              (setq itm (itmCreate (itmGetType (dsf/get-item)) cnt))
+              (objAddItem target itm)
+              (dsf/set-pane 'default)
+              (dsf/set-action-handle label '("Add to Cargo Hold" 'A))
+              (dsf/notify (cat "Added " cnt " " (itmGetName itm (int (fn/plural cnt 1 3))) " to cargo hold"))
+            )
+            (block nil
+              (dsf/set-pane 'counter)
+              (dsf/set-default-counter 1)
+              (dsf/set-action-handle label '("Accept Transaction" 'A))
+              (dsf/notify (cat "Select the amount of \"" (itmGetName (dsf/get-item) 3) "\" you want to add to the cargo hold"))
+            )
+          )
+        )
+      ))
+      (dsf/set-no-save label)
+      (dsf/set-disable-action label '(dsf/list-is-empty))
+    )
+  ))
+
+;;; END ADD TO CARGO ACTION  }}}
 
 ;;; INSTALL ITEM {{{
 
