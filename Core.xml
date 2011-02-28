@@ -120,7 +120,7 @@
         ))
       )
       (dsf/add-list-filter (lambda (entries)
-        (fn/sort entries a b (gr (dsf/get a 'level) (dsf/get b 'level)))
+        (fn/sort entries a b (gr (fn/get a 'level) (fn/get b 'level)))
       ))
       (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block nil
@@ -249,7 +249,7 @@
           ))
         )
         (dsf/add-list-filter (lambda (entries)
-          (fn/sort entries a b (gr (dsf/get a 'level) (dsf/get b 'level)))
+          (fn/sort entries a b (gr (fn/get a 'level) (fn/get b 'level)))
         ))
 
         (dsf/add-action 'friendly '("As Commonwealth" 'C) (lambda nil
@@ -799,7 +799,7 @@
 
     ;;; sort list by weight
     (dsf/add-list-filter (lambda (entries)
-      (fn/sort entries a b (ls (dsf/get a 'weight) (dsf/get b 'weight)))
+      (fn/sort entries a b (ls (fn/get a 'weight) (fn/get b 'weight)))
     ))
 
     ;; timestop handlers

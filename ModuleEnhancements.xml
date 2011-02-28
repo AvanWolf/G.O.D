@@ -43,9 +43,9 @@ TODO
                 (if (and itm (setq hex (itmIsEnhanced itm)))
                   (block (data type)
                     (setq data (god/decode-enhancement hex))
-                    (setq type (dsf/get data 'type))
+                    (setq type (fn/get data 'type))
                     (dsf/set-description (lambda (desc) (block nil
-                      (cat desc "Type: " (dsf/get data 'name) " [" (dsf/get data 'hex) "]\n")
+                      (cat desc "Type: " (fn/get data 'name) " [" (fn/get data 'hex) "]\n")
                       (if (eq type 2)
                         (cat desc "Damage Type: " (fn/int-to-damagetype (modulo (divide hex 16) 16)) "\n")
                       )
@@ -55,7 +55,7 @@ TODO
                       desc
                     )))
 
-                    ;(dsf/set-description (cat "Type: " (dsf/get data 'name) " [" (dsf/get data 'hex) "]\n"))
+                    ;(dsf/set-description (cat "Type: " (fn/get data 'name) " [" (fn/get data 'hex) "]\n"))
                     ;(if (eq type 2)
                     ;  (dsf/set-description (cat "Damage Type: " (fn/int-to-damagetype (modulo (divide hex 16) 16)) "\n") 'append)
                     ;)
@@ -107,12 +107,12 @@ TODO
 
       (setq criteria (dsf/session-delete 'enhancement-criteria))
 
-      (enum (filter god/enhancement-data e (find (dsf/get e 'criteria) criteria)) e
+      (enum (filter god/enhancement-data e (find (fn/get e 'criteria) criteria)) e
         (dsf/add-list-entry (list
-          (list 'title      (cat (dsf/get e 'name) ": " (dsf/get e 'hex)))
-          (list 'subtitle   (cat "Applicable for: " (dsf/get e 'devices) "\n\n" (dsf/get e 'desc)))
-          (list 'hex        (dsf/get e 'hex))
-          (list 'type       (dsf/get e 'type))
+          (list 'title      (cat (fn/get e 'name) ": " (fn/get e 'hex)))
+          (list 'subtitle   (cat "Applicable for: " (fn/get e 'devices) "\n\n" (fn/get e 'desc)))
+          (list 'hex        (fn/get e 'hex))
+          (list 'type       (fn/get e 'type))
         ))
       )
 
@@ -210,14 +210,14 @@ TODO
       (block (hex selected)
         (setq hex (multiply 16 (subtract (divide value 16) (modulo value 16))))
         (enum god/enhancement-data enhancement
-          (if (eq (int (dsf/get enhancement 'hex)) hex)
+          (if (eq (int (fn/get enhancement 'hex)) hex)
             (setq selected enhancement)
           )
         )
         (if (not selected) (block nil
           (setq hex (multiply 16 (divide value 16)))
           (enum god/enhancement-data enhancement
-            (if (eq (int (dsf/get enhancement 'hex)) hex)
+            (if (eq (int (fn/get enhancement 'hex)) hex)
               (setq selected enhancement)
             )
           )
