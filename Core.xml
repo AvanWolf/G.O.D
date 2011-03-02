@@ -331,11 +331,9 @@
           (dsf/add-action 'gate '("Select" 'S) (lambda nil (block (node gate)
             (setq node (dsf/get-list-entry 'node))
             (setq gate (item (sysGetStargates node) 0))
-            (dsf/on-global-exit (lambda nil (block nil
-              (objGateTo gPlayerShip node gate &efStargateOut;)
-              (plyMessage gPlayer (cat "Gating to " (sysGetName node)))
-            )))
             (dsf/exit 'force)
+            (objGateTo gPlayerShip node gate &efStargateOut;)
+            (plyMessage gPlayer (cat "Gated to " (sysGetName node)))
           )))
           (dsf/set-default-action 'gate)
           (dsf/set-disable-action 'gate '(dsf/list-is-empty))
