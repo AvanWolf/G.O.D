@@ -197,7 +197,7 @@
                 )
               (eq orders 'aggressive)
                 (block nil
-                  (objSetSovereign obj &svPlayer;)
+                  (objSetSovereign obj &svDestructiveChaos;)
                   (shpSetCommandCode obj (block nil
                     (shpOrder gSource 'attack (sysFindObject gSource "sTAZN"))
                   ))
