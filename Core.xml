@@ -159,7 +159,7 @@
         )
         '((title      "Aggressive Wander")
           (subtitle   "Add as DestructiveChaos, attacking nearest enemies")
-          (orders     'agressive)
+          (orders     'aggressive)
         )
         '((title      "Escort")
           (subtitle   "Add as your escort")
