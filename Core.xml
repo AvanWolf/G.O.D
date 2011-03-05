@@ -71,10 +71,10 @@
     (weight       1)
     (title        "Restore Player")
     (subtitle     (cat
-      "Restore a target completely.\n"
+      "Restore your ship.\n"
       "Refuel, fix damage/items, remove negative states, "
       "reset Domina powers and various timers, "
-      "fix bad ranks and standings. (some are player only)\n"
+      "fix bad ranks and standings.\n"
       "Credits for this function goes to PM from Transcendence Forums!"
     ))
     (on-select    (block nil
@@ -974,6 +974,24 @@
             (typSetGlobalData &stDomina; "lastInvokeTime4" 0)
             (typSetGlobalData &stDomina; "lastInvokeTime5" 0)
             (typSetGlobalData &stDomina; "lastInvokeTime6" 0)
+
+            ;; reset black market crime status
+            (objSetData gPlayerShip "blackMarketCrime" nil)
+            (objSetData gPlayerShip "blackMarketCrimeCost" nil)
+
+            ;; reset commonwealth crime status
+            (objSetData gPlayerShip "commonCrime" nil)
+            (objSetData gPlayerShip "commonCrimeSeverity" nil)
+            (objSetData gPlayerShip "commonCrimeRecord" nil)
+
+            ;; reset ringer crime status
+            (objSetData gPlayerShip "ringerCrime" nil)
+            (objSetData gPlayerShip "ringerCrimeSeverity" nil)
+
+            ;; fix Korolov standing if required
+            (if (eq (typGetGlobalData &stKorolovShipping "level") -1)
+              (typSetGlobalData &stKorolovShipping "level" 0)
+            )
 
           ))
         ))
