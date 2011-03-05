@@ -197,8 +197,10 @@
                 )
               (eq orders 'aggressive)
                 (block nil
-                  (objSetSovereign obj &svDestructiveChaos;)
-                  (shpSetCommandCode obj (block nil (shpOrder gSource 'attackNearestEnemy)))
+                  (objSetSovereign obj &svPlayer;)
+                  (shpSetCommandCode obj (block nil
+                    (shpOrder gSource 'attack (sysFindObject gSource "sTAZN"))
+                  ))
                 )
               (eq orders 'escort)
                 (shpOrder obj 'escort gPlayerShip)
