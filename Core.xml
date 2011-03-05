@@ -989,8 +989,8 @@
             (objSetData gPlayerShip "ringerCrimeSeverity" nil)
 
             ;; fix Korolov standing if required
-            (if (eq (typGetGlobalData &stKorolovShipping "level") -1)
-              (typSetGlobalData &stKorolovShipping "level" 0)
+            (if (eq (typGetGlobalData &stKorolovShipping; "level") -1)
+              (typSetGlobalData &stKorolovShipping; "level" 0)
             )
 
           ))
