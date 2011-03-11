@@ -291,7 +291,7 @@
     (on-select    (block nil
       (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/new-screen 'item-browser "Item Browser")
-        (god/item-browser "*")
+        (god/item-browser "/*")
         (dsf/show-screen)
       )))
       (dsf/set-default-action 'select)
