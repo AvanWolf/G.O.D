@@ -846,6 +846,11 @@
     virtual="true"
     >
     <Events>
+      <OnGlobalPaneInit>
+        (if (and (eq aScreenUNID &dsShipInterior;) (eq aPane "Default"))
+          (scrAddAction gScreen 'godmod nil "G.O.D" 'G (god/core-screen))
+        )
+      </OnGlobalPaneInit>
       <OnGlobalPlayerEnteredSystem>
         (block (itm)
           (if (not (objHasItem gPlayerShip (setq itm (itmCreate &itGODCoreHook; 1))))
