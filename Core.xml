@@ -10,9 +10,9 @@
 
 <TranscendenceExtension
   UNID="&modGODCore;"
-  name="G.O.D. Core"
+  name="Galactic Omni Device"
   credits="alterecco"
-  version="1.0">
+  version="1.1">
 
 <!--
   License:
@@ -26,6 +26,11 @@
         - Add more info in subtitle?
 
 -->
+
+  <Modules>
+    <Module filename="ModuleTarget.xml"/>
+    <Module filename="ModuleEnhancements.xml"/>
+  </Modules>
 
   <Globals>
     (block nil
@@ -1120,11 +1125,6 @@
 
     )
   </Globals>
-
-  <Modules>
-    <Module filename="ModuleTarget.xml"/>
-    <Module filename="ModuleEnhancements.xml"/>
-  </Modules>
 
 </TranscendenceExtension>
 <!--
