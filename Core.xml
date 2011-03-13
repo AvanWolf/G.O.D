@@ -3,9 +3,8 @@
 [
     <!ENTITY modGODCore                 "0xDCBA0500">
 
-    <!ENTITY itGODCoreHook              "0xDCBA0501">
-    <!ENTITY stGODCoreStation           "0xDCBA0502">
-    <!ENTITY ovGODTimeStop              "0xDCBA0503">
+    <!ENTITY stGODCoreStation           "0xDCBA0501">
+    <!ENTITY ovGODTimeStop              "0xDCBA0502">
 
 ]>
 
@@ -831,33 +830,15 @@
 ;;;; {{{ CORE ITEMS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  <ItemType UNID="&itGODCoreHook;"
-    name=           "G.O.D."
-    virtual=        "true"
-    usekey=         "G"
-    >
-    <Image imageID="&rsItems1;" imageX="0" imageY="576" imageWidth="96" imageHeight="96"/>
-    <Invoke>
-      (god/core-screen)
-    </Invoke>
-  </ItemType>
-
   <StationType UNID="&stGODCoreStation;"
     virtual="true"
     >
     <Events>
       <OnGlobalPaneInit>
         (if (and (eq aScreenUNID &dsShipInterior;) (eq aPane "Default"))
-          (scrAddAction gScreen 'godmod nil "G.O.D" 'G (god/core-screen))
+          (scrAddAction gScreen 'godmod 3 "Galactic Omni Device" 'G (god/core-screen))
         )
       </OnGlobalPaneInit>
-      <OnGlobalPlayerEnteredSystem>
-        (block (itm)
-          (if (not (objHasItem gPlayerShip (setq itm (itmCreate &itGODCoreHook; 1))))
-            (objAddItem gPlayerShip itm)
-          )
-        )
-      </OnGlobalPlayerEnteredSystem>
     </Events>
   </StationType>
 
