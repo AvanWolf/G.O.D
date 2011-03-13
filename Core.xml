@@ -286,10 +286,11 @@
   (lnkAppend god/modules '(
     (weight       3)
     (title        "Browse Items")
-    (subtitle     "Browse and search all items in game. Add some to your cargo hold, or install them directly")
+    (subtitle     "Browse and search all items in game. Add some to your cargo hold, or install them directly. All items will be identified while browsing.")
     (on-select    (block nil
       (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
         (dsf/new-screen 'item-browser "Item Browser")
+        (dsf/screen-set 'identify-items true)
         (god/item-browser "/*")
         (dsf/show-screen)
       )))
@@ -839,6 +840,17 @@
           (scrAddAction gScreen 'godmod 3 "Galactic Omni Device" 'G (god/core-screen))
         )
       </OnGlobalPaneInit>
+      <!-- XXX This is a hack until #632 is fixed -->
+      <OnGlobalUniverseCreated>
+        (block ((items (list)))
+          (enum (typFind "i") itm
+            (if (not (itmIsKnown (itmCreate itm 1)))
+              (lnkAppend items itm)
+            )
+          )
+          (typSetGlobalData &stGODCoreStation; "IdentifiableItems" items)
+        )
+      </OnGlobalUniverseCreated>
     </Events>
   </StationType>
 
@@ -858,36 +870,15 @@
 
 ;;; ITEM BROWSER  {{{
 
-    ;; TODO rewrite this screen to identify all items by default and un-id them on the way out
     (setq god/item-browser (lambda (criteria)
       (block nil
+
         (dsf/item-browser (map (itmGetTypes criteria) itm (itmCreate itm 1)))
 
         (god/add-to-cargo-action 'add-to-cargo gPlayerShip)
-        ;(dsf/add-action 'add-to-cargo '("Add to Cargo Hold" 'A) (lambda nil
-        ;  (block nil
-        ;    (if (eq (dsf/get-pane) 'counter)
-        ;      (block (cnt itm inventory)
-        ;        ;; add item
-        ;        (setq cnt (dsf/get-counter))
-        ;        (setq itm (itmCreate (itmGetType (dsf/get-item)) cnt))
-        ;        (objAddItem gPlayerShip itm)
-        ;        (dsf/set-pane 'default)
-        ;        (dsf/set-action-handle 'add-to-cargo '("Add to Cargo Hold" 'A))
-        ;        (dsf/notify "Your request has been fulfilled")
-        ;      )
-        ;      (block nil
-        ;        (dsf/set-pane 'counter)
-        ;        (dsf/set-default-counter 1)
-        ;        (dsf/set-action-handle 'add-to-cargo '("Accept Transaction" 'A))
-        ;        (dsf/notify (cat "Select the amount of \"" (itmGetName (dsf/get-item) 3) "\" you want to add to your cargo hold"))
-        ;      )
-        ;    )
-        ;  )
-        ;))
         (dsf/set-default-action 'add-to-cargo)
 
-        (dsf/add-action 'install '("Install Item" 'N) (lambda nil
+        (dsf/add-action 'install '("Install Item" 'I) (lambda nil
           (block (itm result)
             (setq itm (dsf/get-item))
             (if (not (itmIsKnown itm))
@@ -902,28 +893,46 @@
           (or (not (dsf/get-item)) (not (itmMatches (dsf/get-item) "d")))
         ))
 
-        ;(dsf/add-action 'identify-single "Identify Current Item" 'C (lambda nil
-        ;  (block (itm)
-        ;    (setq itm (dsf/get-item))
-        ;    (itmSetKnown itm)
-        ;    (dsf/set-description "Identified item")
-        ;  )
-        ;))
-        ;(dsf/set-no-save 'identify-single true)
-        ;(dsf/set-disable-action 'identify-single (lambda nil (block (itm)
-        ;  (or (not (setq itm (dsf/get-item))) (itmIsKnown itm))
-        ;)))
+        (dsf/add-action 'toggle-identify '("Toggle Known" 'T) (lambda nil
+          (block (itm)
+            (setq itm (dsf/get-item))
+            (if itm (block (known)
+              (setq known (itmIsKnown itm))
+              (setq itm (itmGetType itm))
 
-        ;(dsf/add-action 'identify-all "Identify All Items" 'I (lambda nil
-        ;  (block nil
-        ;    (enum (itmGetTypes criteria) itm (block nil
-        ;      (itmSetKnown itm)
-        ;    ))
-        ;    (dsf/set-description "Identified all items")
-        ;  )
-        ;))
-        ;(dsf/set-no-save 'identify-all true)
-        ;(dsf/set-disable-action 'identify-all (lambda nil (not (dsf/get-item))))
+              (if known
+                (block nil
+                  (itmSetKnown itm nil)
+                  (dsf/notify "Unidentified Item")
+                )
+                (block nil
+                  (itmSetKnown itm true)
+                  (dsf/notify "Permanently Identified Item")
+                )
+              )
+
+              (if (dsf/screen-get 'identify-items) (block (items)
+                (setq items (dsf/session-get 'identified-items))
+                (if known
+                  ;; item was known... remove it from the item list (if present)
+                  (block (pos)
+                    (if (setq pos (find items itm))
+                      (lnkRemove items pos nil)
+                    )
+                  )
+                )
+                ;; update the session with the new list
+                (dsf/session-set 'identified-items items)
+              ))
+            ))
+          )
+        ))
+        ;; XXX this can be changed once #632 is updated
+        (dsf/set-disable-action 'toggle-identify (lambda nil
+          (block ((itm (dsf/get-item)))
+            (and (itmIsKnown itm) (not (find (typGetGlobalData &stGODCoreStation; "IdentifiableItems") (itmGetType itm))))
+          )
+        ))
       )
     ))
 
