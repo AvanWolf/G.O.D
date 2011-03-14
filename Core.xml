@@ -5,6 +5,7 @@
 
     <!ENTITY stGODCoreStation           "0xDCBA0501">
     <!ENTITY ovGODTimeStop              "0xDCBA0502">
+    <!ENTITY stGODTravelStation         "0xDCBA0503">
 
 ]>
 
@@ -322,10 +323,16 @@
 
           ;; TODO build a much more advanced system list (in correct order)
 
+          ;; filter out system with unid 0xFFFFFF... that is the endgame system
+          ;; also filter out current system
+          (setq systems (filter systems sys
+            (and
+              (not (eq sys current))
+              (not (eq (sysGetSystemType sys) 0xFFFFFF))
+            )
+          ))
           ;; sort by level
           (setq systems (fn/sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
-          ;; filter out endgame (or any others systems with no gates)
-          (setq systems (filter systems s (gr (count (sysGetStargates s)) 0)))
 
           ;; add list-entries
           (enum systems s (if (not (eq s current))
@@ -349,7 +356,14 @@
         )
       ))
       (dsf/set-default-action 'select)
-      (dsf/set-disable-action 'select '(dsf/list-is-empty))
+
+      (dsf/add-action 'all-systms '("Travel Entire Galaxy" 'T) (lambda nil
+        (block nil
+          (dsf/exit 'force)
+          (plyMessage gPlayer "Touring the Galaxy. This may take a while")
+          (sysCreateStation &stGODTravelStation; nil)
+        )
+      ))
     ))
   ))
 
@@ -867,6 +881,67 @@
     </Events>
   </OverlayType>
 
+  <StationType UNID="&stGODTravelStation;">
+    <Events>
+      <OnCreate>
+        (block nil
+          (if (not (typGetGlobalData &stGODTravelStation; "Traveling"))
+            (block (current systems)
+              (setq current (sysGetNode))
+              (setq systems (sysGetNodes))
+              ;; filter out system with unid 0xFFFFFF... that is the endgame system
+              ;; also filter out current system
+              (setq systems (filter systems sys
+                (and
+                  (not (eq sys current))
+                  (not (eq (sysGetSystemType sys) 0xFFFFFF))
+                )
+              ))
+              ;; append the current system (so we end in it again)
+              (lnkAppend systems current)
+              ;; store the system list on the station (globally)
+              (typSetGlobalData &stGODTravelStation; "SystemList" systems)
+
+              ;; kill messages for the time being
+              (plyRedirectMessage gPlayer true)
+
+              ;; flag that we are traveling
+              (typSetGlobalData &stGODTravelStation; "Traveling" true)
+            )
+          )
+          ;; fire the event
+          (sysAddObjTimerEvent 5 gSource "Travel")
+        )
+      </OnCreate>
+      <OnGlobalPlayerEnteredSystem>
+        (if (typGetGlobalData &stGODTravelStation; "Traveling")
+          (sysCreateStation &stGODTravelStation; nil)
+        )
+      </OnGlobalPlayerEnteredSystem>
+      <OnPlayerLeftSystem>
+        (objDestroy gSource)
+      </OnPlayerLeftSystem>
+      <Travel>
+        (block (systems)
+          (setq systems (typGetGlobalData &stGODTravelStation; "SystemList"))
+          (if systems (block (next)
+            (setq next (item systems 0))
+            ;; remove it from the list
+            (lnkRemove systems 0 nil)
+            ;; update it on global data
+            (if (not systems) (block nil
+              (setq systems nil)
+              (typSetGlobalData &stGODTravelStation; "Traveling" nil)
+              (plyRedirectMessage gPlayer nil)
+            ))
+            (typSetGlobalData &stGODTravelStation; "SystemList" systems)
+            ;; actually travel
+            (objGateTo gPlayerShip next (item (sysGetStargates next) 0) nil)
+          ))
+        )
+      </Travel>
+    </Events>
+  </StationType>
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
