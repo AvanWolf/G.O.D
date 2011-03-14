@@ -264,10 +264,11 @@
           ;; make a small function for handling the spawn
           (setq spawn (lambda (code)
             (block (unid obj)
-              (dbgLog (setq unid (dsf/get-list-entry 'unid)))
-              (dbgLog (setq obj (sysCreateStation unid (sysVectorPolarOffset gPlayerShip 90 10))))
-              ;; if code was provided, run it
-              (if code (dbgLog (code obj)))
+              (setq unid (dsf/get-list-entry 'unid))
+              (god/select-position (lambda (pos) (block (obj)
+                (setq obj (sysCreateStation unid pos))
+                (if code (code obj))
+              )))
             )
           ))
 
@@ -1049,6 +1050,136 @@
 
   <Globals>
     (block Nil
+
+
+
+;;; POSITION SELECTION  {{{
+
+    (setq god/select-position (lambda (code)
+      (block nil
+        (dsf/new-screen 'position-source "Select Position Source" 'custompicker)
+        (dsf/filter-screen)
+        (dsf/set-description (lambda (desc)
+          (cat desc "\n\nSelect the source from which the position will be calculated")
+        ))
+        (dsf/add-list-entry (list
+          (list 'title      "Player Ship")
+          (list 'value      gPlayerShip)
+        ))
+        (dsf/add-list-entry (list
+          (list 'title      "Random")
+          (list 'value      'random)
+          (list 'subtitle   "Spawn randomly, within your vicinity")
+        ))
+        (dsf/add-list-entry (list
+          (list 'title      "System Center")
+          (list 'value      nil)
+        ))
+        (enum (sysFindObject gPlayerShip "T") obj
+          (dsf/add-list-entry (list
+            (list 'title    (objGetName obj 0))
+            (list 'subtitle (cat
+              "Distance: " (objGetDistance gPlayerShip obj) "ls\n"
+              "Sovereign: " (typGetDataField (objGetSovereign obj) 'name)
+            ))
+            (list 'value    obj)
+          ))
+        )
+        (dsf/add-action 'select '("Select" 'S) (lambda nil
+          (block (value)
+            (setq value (dsf/get-list-entry 'value))
+            (if (eq value 'random)
+              (code (sysVectorRandom gPlayerShip (random 10 100) 5))
+
+              (block nil
+                (dsf/session-set 'position-source (dsf/get-list-entry 'value))
+                (dsf/session-set 'distance 10)
+                (dsf/session-set 'angle 90)
+                ;; define the position params screen
+                (dsf/new-screen 'position-params "Set Position Parameters")
+                (dsf/set-description (lambda nil
+                  (block (distance angle)
+                    (setq distance (or (dsf/session-get 'distance) 10))
+                    (setq angle (or (dsf/session-get 'angle) 0))
+                    (cat "Set the params that determine the position.\n"
+                      "An angle of 90 is straight up. 0 is due right.\n"
+                      "Distance: " distance " ls\n"
+                      "Angle: " angle
+                    )
+                  )
+                ))
+
+                (dsf/add-action 'complete '("Complete" 'C) (lambda nil
+                  (block nil
+                    (code (sysVectorPolarOffset value (or (dsf/session-delete 'angle) 0) (or (dsf/session-delete 'distance) 10)))
+                    (dsf/back)
+                  )
+                ))
+                (dsf/set-default-action 'complete)
+                (dsf/set-no-save 'complete)
+
+                (dsf/add-action 'angle '("Set Angle" 'A) (lambda nil
+                  (block nil
+                    (if (eq (dsf/get-pane) 'counter)
+                      (block (value)
+                        (setq value (dsf/get-counter 0 360))
+                        (dsf/session-set "angle" value)
+                        (dsf/set-pane 'default)
+                        (dsf/set-default-action 'complete)
+                        (dsf/show-screen)
+                      )
+                      (block nil
+                        (dsf/set-pane 'counter)
+                        (dsf/set-default-counter 0)
+                        (dsf/set-default-action 'angle)
+                      )
+                    )
+                  )
+                ))
+                (dsf/set-no-save 'angle)
+
+                (dsf/add-action 'distance '("Set Distance" 'D) (lambda nil
+                  (block nil
+                    (if (eq (dsf/get-pane) 'counter)
+                      (block (value)
+                        (setq value (dsf/get-counter 0))
+                        (dsf/session-set "distance" value)
+                        (dsf/set-pane 'default)
+                        (dsf/set-default-action 'complete)
+                        (dsf/show-screen)
+                      )
+                      (block nil
+                        (dsf/set-pane 'counter)
+                        (dsf/set-default-counter 10)
+                        (dsf/set-default-action 'distance)
+                      )
+                    )
+                  )
+                ))
+                (dsf/set-no-save 'distance)
+
+                (dsf/show-screen)
+              )
+            )
+          )
+        ))
+        (dsf/set-default-action 'select)
+        (dsf/set-disable-action 'select '(dsf/list-is-empty))
+        (dsf/set-no-save 'select)
+
+
+
+
+
+
+
+
+
+        (dsf/show-screen 'position-source)
+      )
+    ))
+
+;;; END POSITION SELECTION  }}}
 
 ;;; ITEM BROWSER  {{{
 
