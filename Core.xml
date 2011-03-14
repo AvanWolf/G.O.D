@@ -7,6 +7,9 @@
     <!ENTITY ovGODTimeStop              "0xDCBA0502">
     <!ENTITY stGODTravelStation         "0xDCBA0503">
 
+    <!ENTITY svGODFriendly              "0xDCBA0504">
+    <!ENTITY svGODNeutral               "0xDCBA0505">
+    <!ENTITY svGODAggresive             "0xDCBA0506">
 ]>
 
 <TranscendenceExtension
@@ -942,6 +945,35 @@
       </Travel>
     </Events>
   </StationType>
+
+  <Sovereign UNID="&svGODFriendly;"
+    name="GOD Friendly"
+    alignment="constructive order"
+    >
+    <RelationsShips>
+      <RelationShip sovereign="&svPlayer;" disposition="friendly" mutual="true" />
+    </RelationsShips>
+  </Sovereign>
+
+  <Sovereign UNID="&svGODNeutral;"
+    name="GOD Neutral"
+    alignment="neutral"
+    >
+    <RelationsShips>
+      <RelationShip sovereign="&svPlayer;" disposition="neutral" mutual="true" />
+    </RelationsShips>
+  </Sovereign>
+
+  <Sovereign UNID="&svGODAggresive;"
+    name="GOD Aggressive"
+    alignment="destructive chaos"
+    >
+    <RelationsShips>
+      <RelationShip sovereign="&svPlayer;" disposition="enemy" mutual="true" />
+    </RelationsShips>
+  </Sovereign>
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
