@@ -897,6 +897,8 @@
                   (not (eq (sysGetSystemType sys) 0xFFFFFF))
                 )
               ))
+              ;; sort by level
+              (setq systems (fn/sort systems a b (ls (sysGetLevel a) (sysGetLevel b))))
               ;; append the current system (so we end in it again)
               (lnkAppend systems current)
               ;; store the system list on the station (globally)
