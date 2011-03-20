@@ -362,7 +362,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
-    (weight       3)
+    (weight       2)
     (title        "Browse Items")
     (subtitle     "Browse and search all items in game. Add some to your cargo hold, or install them directly. All items will be identified while browsing.")
     (on-select    (block nil
@@ -839,13 +839,182 @@
   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
+;;;; {{{ MODULE - PLAYER DATA
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (lnkAppend god/modules '(
+    (weight       6)
+    (title        "Player Data")
+    (subtitle     "View and change data stored about the player")
+    (on-select    (block nil
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
+        (god/player-data)
+      ))
+      (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
+    ))
+  ))
+
+  (setq god/player-data (lambda nil
+    (block nil
+      (dsf/new-screen 'player-data "Player Data" 'custompicker)
+      (dsf/filter-screen)
+
+      (dsf/add-list-entries (list
+        (list
+          (list 'title      (lambda nil (cat "FleetLevel: " (objGetData gPlayerShip 'fleetLevel))))
+          (list 'subtitle   "Fleet Level (1-6)")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'fleetLevel arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "FleetXP: " (objGetData gPlayerShip 'fleetXP))))
+          (list 'subtitle   "Fleet Experience Points")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'fleetXP arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "FleetTFSuccess: " (objGetData gPlayerShip 'fleetTFSuccess))))
+          (list 'subtitle   "Number of successful Task Force missions")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'fleetTFSuccess arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "FleetTFFailure: " (objGetData gPlayerShip 'fleetTFFailure))))
+          (list 'subtitle   "Number of failed Task Force missions")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'fleetTFFailure arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "ArenaBattles: " (objGetData gPlayerShip 'arenaBattles))))
+          (list 'subtitle   "Number of battles in the arena")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'arenaBattles arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "ArenaRank: " (objGetData gPlayerShip 'arenaRank))))
+          (list 'subtitle   "An integer representing the captain's rank.\n0 = Citizen, 1 = Gladiator, 2 = Veteran, 3 = Starfighter")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'arenaRank arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "MilitiaRank: " (objGetData gPlayerShip 'militiaRank))))
+          (list 'subtitle   "An integer representing the player's rank in militia")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'militiaRank arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "MilitiaSuccess: " (objGetData gPlayerShip 'militiaSuccess))))
+          (list 'subtitle   "Number of successful Militia missions")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'militiaSuccess arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "MilitiaFailure: " (objGetData gPlayerShip 'militiaFailure))))
+          (list 'subtitle   "Number of faield Militia missions")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'militiaFailure arg)))
+        )
+        (list
+          (list 'title      (lambda nil  (cat "BlackMarketLevel: " (objGetData gPlayerShip 'blackMarketLevel))))
+          (list 'subtitle   "Black market level (1-6)")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'blackMarketLevel arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "BlackMarketXP: " (objGetData gPlayerShip 'blackMarketXP))))
+          (list 'subtitle   "Black Market experience points")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'blackMarketXP arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "BlackMarketCrimeCost: " (objGetData gPlayerShip 'blackMarketCrimeCost))))
+          (list 'subtitle   "Price that the player has to pay to stop bounty hunters")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'blackMarketCrimeCost arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "CommonCrimeSeverity: " (objGetData gPlayerShip 'commonCrimeSeverity))))
+          (list 'subtitle   "Severity of players crime.\n0 = No Crime, 1 = Misdemeanor, 2 = Felony (piracy), 3 = Crimes against Humanity (slave-trading, genocide, mass-destruction)")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'commonCrimeSeverity arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "CommonCrimeRecord: " (objGetData gPlayerShip 'commonCrimeRecord))))
+          (list 'subtitle   "Number of times player has been caught and released for a felony")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'commonCrimeRecord arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "RingerCrimeSeverity: " (objGetData gPlayerShip 'ringerCrimeSeverity))))
+          (list 'subtitle   "Severity of crime agains ringers.\n0 = No crime, 1 = Social violation, 2 = Dangerous deviance, 3 = Existential threat")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'ringerCrimeSeverity arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "SistersAttitude: " (objGetData gPlayerShip 'sistersAttitude))))
+          (list 'subtitle   "Abstract measure of the sisters' attitude towards the player")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'sistersAttitude arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "SistersLastDonation: " (objGetData gPlayerShip 'sistersLastDonation))))
+          (list 'subtitle   "Time at which the player donated last (Nil if never)")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'sistersLastDonation arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "SlaveReward: " (objGetData gPlayerShip 'slaveReward))))
+          (list 'subtitle   "Number of slaves for which player has already been rewarded")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'slaveReward arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "SlaveSales: " (objGetData gPlayerShip 'slaveSales))))
+          (list 'subtitle   "Proceeds from slave sales")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'slaveSales arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "SlavesFreed: " (objGetData gPlayerShip 'slavesFreed))))
+          (list 'subtitle   "Number of slaves freed to commonwealth authorities")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'slavesFreed arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "TualiSymbiote: " (objGetData gPlayerShip 'tualiSymbiote))))
+          (list 'subtitle   "Has The Tuali Symbiote been implanted (Must be True or Nil)")
+          (list 'func       (lambda (arg) (objSetData gPlayerShip 'tualiSymbiote arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "DominaLevel: " (typGetGlobalData &stDomina; "level"))))
+          (list 'subtitle   "Your current domina Level")
+          (list 'func       (lambda (arg) (typSetGlobalData &stDomina; "level" arg)))
+        )
+        (list
+          (list 'title      (lambda nil (cat "DominaXP: " (typGetGlobalData &stDomina; "xp"))))
+          (list 'subtitle   "Domina XP")
+          (list 'func       (lambda (arg) (typSetGlobalData &stDomina; "xp" arg)))
+        )
+      ))
+      ;; add the domina powers' last invoke time
+      (for i 1 6 (dsf/add-list-entry (list
+        (list 'title        (lambda nil (cat "LastInvokeTime" i ": " (typGetGlobalData &stDomina; (cat "lastInvokeTime" i)))))
+        (list 'subtitle     (cat "Last time a lvl " i " power was invoked."))
+        (list 'func         (lambda (arg) (typSetGlobalData &stDomina; (cat "lastInvokeTime" i) arg)))
+      )))
+
+      (dsf/add-action 'modify '("Modify" 'M) (lambda nil
+        (block nil
+          (if (eq (dsf/get-pane) 'counter)
+            (block (value func)
+              (setq value (dsf/get-counter))
+              (setq func (dsf/get-list-entry 'func))
+              (func value)
+              (dsf/notify "Changed value")
+              (dsf/set-pane 'default)
+              (dsf/show-screen)
+            )
+            (block nil
+              (dsf/set-pane 'counter)
+            )
+          )
+        )
+      ))
+      (dsf/set-default-action 'modify)
+
+      (dsf/show-screen)
+    )
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;}}}
 ;;;; {{{ MODULE - TIMESTOP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   (lnkAppend god/modules '(
     (weight     9)
     (title      "Time Stop")
-    (subtitle   "Stop time and start it again. Great for taking a look around")
+    (subtitle   "Stop time or start it again. Great for taking a look around")
     (on-select  (block nil
       (dsf/add-action 'toggle-time
         (lambda nil (block (state)
@@ -1050,8 +1219,6 @@
 
   <Globals>
     (block Nil
-
-
 
 ;;; POSITION SELECTION  {{{
 
