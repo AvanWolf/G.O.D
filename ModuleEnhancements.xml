@@ -4,7 +4,7 @@
 <!--
 
 TODO
-  Enhance reactors with (shpEnhanceItem greactor)
+  * Enhance reactors with (shpEnhanceItem greactor)
 
 -->
 
@@ -26,7 +26,7 @@ TODO
         (title        "Analyze Enhancement")
         (subtitle     "Find out just what is going on with your enhancement")
         (hide         (block ((do-hide true))
-          (objEnumItems gPlayerShip itm
+          (objEnumItems gPlayerShip "*" itm
             (if (itmIsEnhanced itm) (setq do-hide nil))
           )
           do-hide
@@ -35,36 +35,57 @@ TODO
           (dsf/add-action 'select '("Select" 'S) (lambda nil
             (block nil
               (dsf/new-screen 'analyze-enhancement "Analyze Enhancement" 'itempicker)
-              (dsf/set-item-filter "swa")
-
-              (dsf/on-pane-init (lambda nil (block (itm hex)
-                (setq itm (dsf/get-item))
-                (if (and itm (setq hex (itmIsEnhanced itm)))
-                  (block (data type)
-                    (setq data (god/decode-enhancement hex))
-                    (setq type (fn/get data 'type))
-                    (dsf/set-description (lambda (desc) (block nil
-                      (cat desc "Type: " (fn/get data 'name) " [" (fn/get data 'hex) "]\n")
-                      (if (eq type 2)
-                        (cat desc "Damage Type: " (fn/int-to-damagetype (modulo (divide hex 16) 16)) "\n")
-                      )
-                      (if (or (eq type 1) (eq type 2))
-                        (cat desc "Power: " (modulo hex 16) "\n")
-                      )
-                      desc
-                    )))
-
-                    ;(dsf/set-description (cat "Type: " (fn/get data 'name) " [" (fn/get data 'hex) "]\n"))
-                    ;(if (eq type 2)
-                    ;  (dsf/set-description (cat "Damage Type: " (fn/int-to-damagetype (modulo (divide hex 16) 16)) "\n") 'append)
-                    ;)
-                    ;(if (or (eq type 2) (eq type 1))
-                    ;  (dsf/description (cat "Power: " (modulo hex 16) "\n") 'append)
-                    ;)
-                  )
-                  (dsf/set-description "Item is not enhanced")
-                )
+              (dsf/set-item-filter (lambda nil (lambda (itm)
+                (itmIsEnhanced itm)
               )))
+              (dsf/set-description (lambda (desc) (block (itm hex)
+                (setq itm (dsf/get-item))
+                (if (and itm (setq hex (itmIsEnhanced itm))) (block (data type)
+                  (setq data (god/decode-enhancement hex))
+                  (setq type (fn/get data 'type))
+                  (dbgLog type)
+                  (setq desc (cat desc "Type: " (fn/get data 'name) " [" (fn/get data 'hex) "]\n"))
+                  (if (eq type 2)
+                    (setq desc (cat desc "Damage Type: " (fn/int-to-damagetype (modulo (divide hex 16) 16)) "\n"))
+                  )
+                  (if (or (eq type 1) (eq type 2))
+                    (setq desc (cat desc "Power: " (modulo hex 16) "\n"))
+                  )
+                ))
+                desc
+              )))
+
+              (dsf/show-screen)
+            )
+          ))
+          (dsf/set-default-action 'select)
+        ))
+      )
+      '((weight     4)
+        (title      "Remove Enhancement")
+        (subtitle   "Because we are testers after all :/")
+        (hide       (block ((do-hide true))
+          (objEnumItems gPlayerShip "*" itm
+            (if (itmIsEnhanced itm) (setq do-hide nil))
+          )
+          do-hide
+        ))
+        (on-select  (block nil
+          (dsf/add-action 'select '("Select" 'S) (lambda nil
+            (block nil
+              (dsf/new-screen 'remove-enhancement "Remove Enhancement" 'itempicker)
+              (dsf/set-item-filter (lambda nil (lambda (itm)
+                (itmIsEnhanced itm)
+              )))
+
+              (dsf/add-action 'remove '("Remove" 'R) (lambda nil
+                (block (itm)
+                  (setq itm (dsf/get-item))
+                  (shpDamageItem gPlayerShip itm)
+                  (dsf/notify "Unenhanced Item")
+                  (dsf/show-screen)
+                )
+              ))
 
               (dsf/show-screen)
             )
