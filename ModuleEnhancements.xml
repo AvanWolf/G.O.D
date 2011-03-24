@@ -103,7 +103,7 @@ TODO
     (setq god/enhance-item (lambda nil (block nil
       (dsf/new-screen 'enhance-item "Enhance Item" 'itempicker)
       (dsf/set-description "Select an item you want to enhance")
-      (dsf/set-item-filter "swa")
+      (dsf/set-item-filter "swabr")
 
       (dsf/add-action 'select '("Select" 'S) (lambda nil (block (itm criteria)
         (setq itm (dsf/get-item))
@@ -438,7 +438,7 @@ TODO
       )
       '((name           "Efficiency")
         (devices        "Shield, Weapon")
-        (criteria       "ws")
+        (criteria       "wsbr")
         (hex            "0x0F00")
         (type           1)
         (desc           "Lowers power consumption. Effect of higher X unknown. More information needed.")
