@@ -250,12 +250,14 @@
 
           ;; add stations to the list
           (enum (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
-            (dsf/add-list-entry (list
-              (list 'title      (typGetDataField unid 'name))
-              (list 'subtitle   (cat "Level: " (typGetDataField unid 'level)))
-              (list 'unid       unid)
-              (list 'level      (typGetDataField unid 'level))
-            ))
+            (if (typGetDataField unid 'name)
+              (dsf/add-list-entry (list
+                (list 'title      (typGetDataField unid 'name))
+                (list 'subtitle   (cat "Level: " (typGetDataField unid 'level)))
+                (list 'unid       unid)
+                (list 'level      (typGetDataField unid 'level))
+              ))
+            )
           )
           (dsf/add-list-filter (lambda (entries)
             (fn/sort entries a b (gr (fn/get a 'level) (fn/get b 'level)))
