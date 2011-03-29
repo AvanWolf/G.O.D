@@ -163,6 +163,10 @@
           (subtitle   "Add as enemy, attacking you")
           (orders     'enemy)
         )
+        '((title      "Wander")
+          (subtitle   "Add as Independent, wandering")
+          (orders     'wander)
+        )
         '((title      "Aggressive Wander")
           (subtitle   "Add as DestructiveChaos, attacking nearest enemies")
           (orders     'aggressive)
@@ -200,6 +204,10 @@
                 (block nil
                   (objSetSovereign obj &svPirates;)
                   (shpOrder obj 'attack gPlayerShip)
+                )
+              (eq orders 'wander)
+                (block nil
+                  (shpOrder obj 'wander)
                 )
               (eq orders 'aggressive)
                 (block nil
