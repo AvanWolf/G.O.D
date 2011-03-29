@@ -547,8 +547,6 @@
     (subtitle     "Remove any device you have installed on your ship")
     (on-select    (block nil
       (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
-        (setq gPrevScreen (-dsf/get-screen-unid))
-        (setq gPrevPane "Default")
         (setq gMargin 0)
         (scrShowScreen gScreen "&dsRemoveDevice;")
       )))
@@ -567,8 +565,6 @@
     (subtitle     "Fix up your armor, or replace segments")
     (on-select    (block nil
       (dsf/add-action 'select '("Select" 'S) (lambda nil (block nil
-        (setq gPrevScreen (-dsf/get-screen-unid))
-        (setq gPrevPane "Default")
         (setq gTechLevel 15)
         (setq gArmorSegment 0)
         (setq gMargin 0)
