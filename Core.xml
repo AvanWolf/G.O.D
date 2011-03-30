@@ -275,9 +275,10 @@
           (setq spawn (lambda (code)
             (block (unid obj)
               (setq unid (dsf/get-list-entry 'unid))
-              (god/select-position (lambda (pos) (block (obj)
+              (god/select-position (lambda (pos desc) (block (obj)
                 (setq obj (sysCreateStation unid pos))
                 (if code (code obj))
+                (dsf/back)
               )))
             )
           ))
@@ -1262,7 +1263,7 @@
           (block (value)
             (setq value (dsf/get-list-entry 'value))
             (if (eq value 'random)
-              (code (sysVectorRandom gPlayerShip (random 10 100) 5))
+              (code (sysVectorRandom gPlayerShip (random 10 100) 5) "Random")
 
               (block nil
                 (dsf/session-set 'position-source (dsf/get-list-entry 'value))
@@ -1283,9 +1284,19 @@
                 ))
 
                 (dsf/add-action 'complete '("Complete" 'C) (lambda nil
-                  (block nil
-                    (code (sysVectorPolarOffset value (or (dsf/session-delete 'angle) 0) (or (dsf/session-delete 'distance) 10)))
-                    (dsf/back)
+                  (block (distance angle source pos desc)
+                    (setq distance (or (dsf/session-delete 'distance) 10))
+                    (setq angle (or (dsf/session-delete 'angle) 0))
+                    (setq source (switch
+                      (eq value 'nil)
+                        "System Center"
+                      (eq value gPlayerShip)
+                        "Player Ship"
+                      (objGetName value)
+                    ))
+                    (setq desc (cat "Distance: " distance ", Angle: " angle ", From: " source))
+                    (setq pos (sysVectorPolarOffset value angle distance))
+                    (code pos desc)
                   )
                 ))
                 (dsf/set-default-action 'complete)
@@ -1339,14 +1350,6 @@
         (dsf/set-default-action 'select)
         (dsf/set-disable-action 'select '(dsf/list-is-empty))
         (dsf/set-no-save 'select)
-
-
-
-
-
-
-
-
 
         (dsf/show-screen 'position-source)
       )
