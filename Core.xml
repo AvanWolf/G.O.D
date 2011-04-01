@@ -114,7 +114,27 @@
     (block (spawn)
 
       (dsf/new-screen 'ship-select "Select Ship" 'custompicker)
-      (dsf/filter-screen)
+
+      ;; add a propper filter expression
+      ;; we filter on title, and on typFind attributes
+      (dsf/filter-screen (lambda (entries)
+        (block (search term crit)
+          (setq search (fn/split (or (dsf/screen-get 'filter-term) "") "/"))
+          (setq term (item search 0))
+          (setq crit (item search 1))
+          (if (and term (not (eq (count term) 0)))
+            (setq entries (filter entries entry
+              (strFind (fn/get entry 'title) term)
+            ))
+          )
+          (if crit
+            (setq entries (filter entries entry
+              (if crit (find (typFind (cat "*" crit)) (fn/get entry 'unid)))
+            ))
+          )
+          entries
+        )
+      ))
 
       ;; add ships to the list
       (enum (typFind "s") unid
@@ -250,14 +270,39 @@
     (subtitle     "Browse and spawn any station in the game")
     (on-select    (block nil
       (dsf/add-action 'select '("Select" 'S) (lambda nil
-        (block (spawn)
+        (block (stations spawn)
           (dsf/new-screen 'spawn-station "Spawn Station" 'custompicker)
-          (dsf/filter-screen)
+
+          ;; add a propper filter expression
+          ;; we filter on title, and on typFind attributes
+          (dsf/filter-screen (lambda (entries)
+            (block (search term crit)
+              (setq search (fn/split (or (dsf/screen-get 'filter-term) "") "/"))
+              (setq term (item search 0))
+              (setq crit (item search 1))
+              (if (and term (not (eq (count term) 0)))
+                (setq entries (filter entries entry
+                  (strFind (fn/get entry 'title) term)
+                ))
+              )
+              (if crit
+                (setq entries (filter entries entry
+                  (if crit (find (typFind (cat "*" crit)) (fn/get entry 'unid)))
+                ))
+              )
+              entries
+            )
+          ))
 
           (dsf/set-description "\n\nSpawn a single station ten ls due north from you.")
 
           ;; add stations to the list
-          (enum (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
+          ;; TODO wait for george to add `encounter' attribute to all encounter classes
+          ;;      at that point, we can exclude asteroids and shipwrecks
+          ;(setq stations (typFind "t -star; -asteroid; -shipwreck; -planet;"))
+          (setq stations (typFind "t -star; -planet;"))
+
+          (enum stations unid
             (if (typGetDataField unid 'name)
               (dsf/add-list-entry (list
                 (list 'title      (typGetDataField unid 'name))
