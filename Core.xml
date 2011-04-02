@@ -10,6 +10,10 @@
     <!ENTITY svGODFriendly              "0xDCBA0504">
     <!ENTITY svGODNeutral               "0xDCBA0505">
     <!ENTITY svGODAggresive             "0xDCBA0506">
+
+    <!-- Space Battle -->
+    <!ENTITY svGodRed                   "0xDCBA0520">
+    <!ENTITY svGodBlue                  "0xDCBA0521">
 ]>
 
 <TranscendenceExtension
@@ -32,6 +36,7 @@
   <Modules>
     <Module filename="ModuleTarget.xml"/>
     <Module filename="ModuleEnhancements.xml"/>
+    <Module filename="ModuleSpaceBattle.xml"/>
   </Modules>
 
   <Globals>

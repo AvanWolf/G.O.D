@@ -1,234 +1,455 @@
 <?xml version="1.0" ?>
-<!DOCTYPE TranscendenceExtension
-[
-    <!ENTITY modGODModuleSpaceBattle        "0xDCBA0520">
-    <!ENTITY svGODRed                       "0xDCBA0521">
-    <!ENTITY svGODBlue                      "0xDCBA0522">
-    <!ENTITY svGODGreen                     "0xDCBA0523">
-]>
-
-<TranscendenceExtension
-  UNID="&modGODModuleSpaceBattle;"
-  name="G.O.D. Module - Space Battle"
-  credits="alterecco"
-  version="1.0">
+<TranscendenceModule>
 
   <Globals>
-    (block (module)
+  (block (module)
 
-    (setq module (list
-      '((weight       1)
-        (title        "Space Battle")
-        (subtitle     "Create massive space battles, if that is your thing")
-        (on-select    (block nil
-          (dsf/action 'select "Select" 'S (lambda nil
-            (block nil
-              (god/battle-overview)
-            )
-          ))
+  (setq module (list
+    '((weight       4)
+      (title        "Space Battle")
+      (subtitle     "Create massive space battles, if that is your thing")
+      (on-select  (block nil
+        (dsf/add-action 'select '("Select" 'S) (lambda nil
+          (god/battle-overview)
         ))
-        (hide true)
-      )
-    ))
+        (dsf/set-default-action 'select)
+      ))
+    )
+  ))
 
-    (setq god/modules (if (isError god/modules)
-      module
-      (append god/modules module)
-    ))
+  (setq god/modules (if (isError god/modules)
+    module
+    (append god/modules module)
+  ))
 
-    (setq god/battle-overview (lambda nil
-      (block nil
-        (dsf/screen 'battles-overview "Battle Overview" 'custompicker)
+  ;;
+  ;; SCREENS
+  ;;
 
-        (dsf/list-data (lambda (data)
-          (block nil
-            (enum (-god/get-battle-squadrons) group
-              (setq data (append data (list
-                '((title "xxx")
-                )
-              )))
-            )
-            data
-          )
-        ))
+  ;; BATTLE OVERVIEW
 
-        (dsf/action 'select "Select" 'S (lambda nil
-        ))
-        (dsf/disable-action 'select (lambda nil (not (dsf/list-entry 'squadron))))
+  (setq god/battle-overview (lambda nil
+    (block nil
+      (dsf/new-screen 'battle-overview "Battle Overview" 'custompicker)
 
-        (dsf/action 'add "Add Squadron" 'A (lambda nil
-          (block nil
-          )
-        ))
-        (dsf/show-screen)
-      )
-    ))
-
-    (setq -god/get-battle-squadrons (lambda nil
-      (block ((groups (list)))
-        (enum (sysFindObject nil "st D:GODBattle") obj
-          (fn/hash-append groups (or (objGetData obj "GODBattleSquadron") "Unknown") obj)
-        )
-        groups
-      )
-    ))
-
-
-
-
-    (setq god/spawn-list (lambda nil
-      (block (spawn (data (list)))
-
-        (dsf/screen 'spawn-list "Spawn List")
-
-        (setq spawn (sysFindObject nil "st D:GODSpawn"))
-
-        (dsf/list-data (fn/list-map spawn obj (list
-          (list 'title      (objGetName obj))
-          (list 'subtitle   "...")
-        )))
-
-        (dsf/action 'add "Add Object" 'A god/type-spawn-browser)
-        (dsf/no-save 'add true)
-
-        (dsf/action 'spawn "Spawn!" 'S (lambda nil
-          (block nil
-            (enum (sysFindObject nil "st D:GODSpawn") obj
-              (objResume obj)
-            )
-            (plyMessage gPlayer "Spawned all objects")
-            (dsf/exit)
-          )
-        ))
-
-        (dsf/filter-screen)
-        (dsf/show-screen)
-      )
-    ))
-
-    (setq god/type-spawn-browser (lambda nil
-      (block (list-fn)
-
-        (dsf/screen 'type-spawn-browser "Spawn Types")
-
-        ;; add ships
-        (dsf/list-data (fn/list-map (typFind "s") unid
-          (list
-            (list 'title      (typGetDataField unid 'name))
-            (list 'unid       unid)
-            (list 'type       'ship)
-          )
-        ))
-
-        ;; add stations
-        (dsf/list-data (fn/list-map (typFind "t -star; -asteroid; -shipwreck; -planet;") unid
-          (list
-            (list 'title      (typGetDataField unid 'name))
-            (list 'unid       unid)
-            (list 'type       'station)
-          )
-        ) 'append)
-
-        (dsf/action 'add "Add to Spawn List" 'A (lambda nil
-          (block (unid type pos obj)
-            ;; spawn and suspend the current type
-            ;; add data to the ship that lets
-            ;; us find it again
-            (setq unid (dsf/list-entry 'unid))
-            (setq type (dsf/list-entry 'type))
-            (setq pos (objGetPos gPlayerShip))
-            (switch
-              (eq type 'ship)
-                (block nil
-                  (setq obj (sysCreateShip unid pos &svIndependent;))
-                  (shpOrder obj 'hold)
-                )
-              (eq type 'station)
-                (block nil
-                  (setq obj (sysCreateStation unid pos))
-                  (objSuspend obj)
-                )
-            )
-            (if obj (block nil
-              (objSetData obj "GODSpawn" true)
-              (objSetData obj "GODSpawnTeam" "Neutral")
+      (enum (god/battle-get-squads) squad
+        (block nil
+          (setq squad (item squad 1))
+          (dsf/add-list-entry (list
+            (list 'title        (fn/get squad 'name))
+            (list 'subtitle     (cat
+              "Team: " (or (fn/get squad 'team-desc) "None")
+              "\nOrigin: " (fn/get squad 'origin-desc)
+              ;; TODO add unit info
             ))
-            (dsf/description "Added to spawn list")
-          )
-        ))
-        (dsf/no-save 'add true)
+            (list 'id           (fn/get squad 'id))
+          ))
+        )
+      )
 
-        (dsf/action 'spawn-list "Back to Spawn List" 'B (lambda nil
-          (god/spawn-list)
-        ))
-        (dsf/no-save 'spawn-list true)
+      (dsf/add-action 'new-squad '("New Squadron" 'N) (lambda nil
+        (block (squads num id)
+          (setq squads (god/battle-get-squads))
 
-        (dsf/no-back true)
+          (setq num (add (or (count squads) 0) 1))
+          (setq id (cat "squad-" num))
 
-        ;; add a nice filter function
-        ;; document that attributes can be filtered with +/-
-        (dsf/filter-screen (lambda (data) (block (term)
-          (if (setq term (dsf/data-get 'filter-term))
-            (block (char)
-              (setq char (subset term 0 1))
-              (switch
-                (eq char '+)
-                  (filter data el (typHasAttribute (fn/hash-get el 'unid) (subset term 1)))
-                (eq char '-)
-                  (filter data el (not (typHasAttribute (fn/hash-get el 'unid) (subset term 1))))
-                (filter data el (strFind (fn/eval (fn/hash-get el 'title)) term))
+          (fn/set squads (list id 'id) id)
+          (fn/set squads (list id 'name) (cat "Squadron " num))
+          (fn/set squads (list id 'origin) (objGetPos gPlayerShip))
+          (fn/set squads (list id 'origin-desc) "Player Ship")
+
+          (god/battle-set-squads squads)
+
+          (dsf/session-set 'squad id)
+          (dsf/session-set 'state 'new)
+          (god/battle-manage-squad)
+        )
+      ))
+      (dsf/set-no-save 'new-squad)
+
+      (dsf/add-action 'edit-squad '("Change Squadron" 'C) (lambda nil
+        (block nil
+          (dsf/session-set 'squad (dsf/get-list-entry 'id))
+          (dsf/session-set 'state 'edit)
+          (god/battle-manage-squad)
+        )
+      ))
+      (dsf/set-disable-action 'edit-squad '(dsf/list-is-empty))
+      (dsf/set-no-save 'edit-squad)
+
+      (dsf/add-action 'delete-squad '("Delete Squadron" 'D) (lambda nil
+        (block (squads id)
+          (setq squads (god/battle-get-squads))
+          (setq id (dsf/get-list-entry 'id))
+          (fn/delete squads id)
+          (god/battle-set-squads squads)
+          (dsf/notify "Deleted squad")
+          (god/battle-overview)
+        )
+      ))
+      (dsf/set-disable-action 'delete-squad '(dsf/list-is-empty))
+      (dsf/set-no-save 'delete-squad)
+
+      (dsf/add-action 'spawn '("Spawn!" 'S) (lambda nil
+        (block (message squads)
+          (setq squads (god/battle-get-squads))
+          ;; loop over the squads and check that they have a team
+          ;; and that they have units
+          ;; TODO also check that we have two opposing forces?
+          (enum squads squad (block nil
+            (setq squad (item squad 1))
+            ;; check that we have a team
+            (if (not (fn/get squad 'team))
+              (setq message (cat "You need to set a team for squadron \"" (fn/get squad 'name) "\""))
+              ;; check the we have units
+              (if (not (fn/get squad 'units))
+                (setq message (cat "You need to add units to squad \"" (fn/get squad 'name) "\""))
               )
             )
-            data
+          ))
+
+          (if message
+            (dsf/notify message)
+            (block nil
+              (enum squads squad (block (origin team units)
+                (setq squad (item squad 1))
+                (setq origin (fn/get squad 'origin))
+                (setq team (fn/get squad 'team))
+                (setq units (fn/get squad 'units 'wrap))
+                (enum units unit (block (unid amount type)
+                  (setq unid (item unit 0))
+                  (setq amount (item unit 1))
+                  (setq type (item unit 2))
+                  (for i 1 amount (block (obj)
+                    (if (eq type 'ship)
+                      (block nil
+                        (setq obj (sysCreateShip unid origin team))
+                        (shpOrder obj 'attackNearestEnemy)
+                      )
+                      (block nil
+                        (setq obj (sysCreateStation unid origin))
+                        (objSetSovereign obj team)
+                      )
+                    )
+                  ))
+                ))
+              ))
+              (dsf/exit 'force)
+            )
           )
-        )))
-        (dsf/show-screen)
+        )
+      ))
+      (dsf/set-disable-action 'spawn '(dsf/list-is-empty))
+
+      (dsf/show-screen)
+    )
+  ))
+
+
+  ;; MANAGE SQUAD
+
+  (setq god/battle-manage-squad (lambda nil
+    (block (squad units)
+      (dsf/new-screen 'battle-manage-squad)
+      (dsf/set-type 'custompicker)
+      (dsf/set-name (if (eq (dsf/session-get 'state) 'edit)
+        "Change Squadron"
+        "New Squadron"
+      ))
+
+      (setq squad (fn/get (god/battle-get-squads) (dsf/session-get 'squad)))
+      (setq units (fn/get squad 'units 'wrap))
+
+      (enum units unit
+        (dsf/add-list-entry (list
+          (list 'title      (typGetDataField (item unit 0) 'name))
+          (list 'subtitle   (cat 
+            "Amount: " (item unit 1)
+            "\nLevel: " (typGetDataField (item unit 0) 'level)
+          ))
+          (list 'unit       unit)
+          (list 'level      (typGetDataField (item unit 0) 'level))
+        ))
       )
-    ))
+
+      (dsf/add-list-filter (lambda (entries)
+        (fn/sort entries a b (gr (fn/get a 'level) (fn/get b 'level)))
+      ))
+
+      (dsf/session-set 'squad (fn/get squad 'id))
+      (dsf/session-set 'squad-name (fn/get squad 'name))
+      (dsf/session-set 'squad-team (or (fn/get squad 'team-desc) "None"))
+      (dsf/session-set 'squad-origin (fn/get squad 'origin-desc))
+
+      (dsf/set-description (lambda (desc)
+        (block nil
+          (cat desc
+            "Name: " (dsf/session-get 'squad-name)
+            "\nTeam: " (dsf/session-get 'squad-team)
+            "\nOrigin: " (dsf/session-get 'squad-origin)
+          )
+        )
+      ))
+
+      (dsf/add-action 'set-name '("Change Name" 'N) (lambda nil
+        (block nil
+          (if (eq (dsf/get-pane) 'textinput)
+            (block (name squads)
+              (setq name (dsf/get-textinput))
+              (setq squads (god/battle-get-squads))
+              (fn/set squads (list (dsf/session-get 'squad) 'name) name)
+              (god/battle-set-squads squads)
+              (dsf/session-set 'squad-name name)
+              (dsf/set-pane 'default)
+              (dsf/notify (cat "Changed Name"))
+              (dsf/set-default-action (or (dsf/screen-delete 'previous-default-action) 'set-name))
+            )
+            (block nil
+              (dsf/set-pane 'textinput)
+              (dsf/notify "Enter new name")
+              (dsf/screen-set 'previous-default-action (dsf/screen-get 'default-action))
+              (dsf/set-default-action 'set-name)
+            )
+          )
+        )
+      ))
+      (dsf/set-no-save 'set-name)
+
+      (dsf/add-action 'set-team '("Change Team" 'T) (lambda nil
+        (block nil
+          (god/battle-set-team)
+        )
+      ))
+      (dsf/set-no-save 'set-team)
+
+      (dsf/add-action 'set-origin '("Change Origin" 'O) (lambda nil
+        (block nil
+          (god/select-position (lambda (pos desc)
+            (block (squads)
+              (setq squads (god/battle-get-squads))
+              (fn/set squads (list (dsf/session-get 'squad) 'origin) pos)
+              (fn/set squads (list (dsf/session-get 'squad) 'origin-desc) desc)
+              (god/battle-set-squads squads)
+              (god/battle-manage-squad)
+            )
+          ))
+        )
+      ))
+
+      (dsf/add-action 'add-object '("Add Object" 'A) (lambda nil
+        (block nil
+          (god/battle-add-object)
+        )
+      ))
+      (dsf/set-default-action 'add-object)
+      (dsf/set-no-save 'add-object)
+
+      (dsf/add-action 'remove-object '("Remove Object" 'R) (lambda nil
+        (block (squads id units unit index)
+          (setq squads (god/battle-get-squads))
+          (setq id (dsf/session-get 'squad))
+          (setq units (fn/get squads (list id 'units) 'wrap))
+          (setq unit (dsf/get-list-entry 'unit))
+
+          (setq index (find units unit))
+          (lnkRemove units index nil)
+
+          (fn/delete squads (list id 'units))
+          (enum units unit
+            (fn/set squads (list id 'units) unit 'append)
+          )
+          (god/battle-set-squads squads)
+
+          (dsf/notify "Removed unit")
+          (god/battle-manage-squad)
+        )
+      ))
+      (dsf/set-disable-action 'remove-object '(dsf/list-is-empty))
+      (dsf/set-no-save 'remove-object)
+
+      (dsf/add-action 'done '("Done" 'D) (lambda nil
+        (block nil
+          (dsf/notify (if (eq (dsf/session-get 'state) 'edit)
+            "Changed Squadron"
+            "Added Squadron"
+          ))
+          (god/battle-overview)
+        )
+      ))
+      (dsf/set-cancel-action 'done)
+      (dsf/set-no-save 'done)
+
+      (dsf/set-no-back)
+      (dsf/set-no-exit)
+      (dsf/show-screen)
+    )
+  ))
 
 
+  (setq god/battle-set-team (lambda nil
+    (block nil
+      (dsf/new-screen 'battle-set-team "Set Team" 'custompicker)
 
-
-
-    ;; build discrete screens to handle the various display tasks independantly
-    (setq dsf/space-object-browser (lambda nil
-      (block nil
-        (dsf/screen 'space-object-browser "Browser Space Objects")
-
-        ;; Things to consider:
-        ;;
-        ;; - Objects should stack, but it should also be
-        ;;   possible to split stacks
-
-        ;; Spawn List Screen
-        ;; - Filter
-        ;; - Add Object
-        ;; - Remove Object
-        ;; - Modify Object
-        ;; - Back
-        ;; - Exit
-
-        ;; Add Object Screen
-        ;; - Add to Spawn (select count first)
-        ;; - Set Sovereign and Squadron
-
-        ;; Modify Object Screen
-        ;; - Set Team (either toggle or show team screen)
-        ;; - Set Orders (only for ships)
-        ;; - Change Loudout
-
-
+      (enum (typFind "v +god +spacebattle") sov
+        (dsf/add-list-entry (list
+          (list 'title      (typGetDataField sov 'name))
+          (list 'subtitle   (typGetStaticData sov "Description"))
+          (list 'team       sov)
+          (list 'team-desc  (typGetDataField sov 'name))
+        ))
       )
-    ))
 
-    ;; TODO: this can be improved once #553 is fixed
-    ;;
-    ;; return a list of sovereigns for use in the spawn
-    (setq -god/get-battle-sovereigns (lambda nil
-      (block nil
-        (filter (typFind "v") s (typGetStaticData s "GODBattleSovereign"))
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
+        (block (squads team team-desc)
+          (setq squads (god/battle-get-squads))
+          (setq team (dsf/get-list-entry 'team))
+          (setq team-desc (dsf/get-list-entry 'team-desc))
+          (dsf/session-set 'squad-team team-desc)
+          (fn/set squads (list (dsf/session-get 'squad) 'team) team)
+          (fn/set squads (list (dsf/session-get 'squad) 'team-desc) team-desc)
+          (god/battle-set-squads squads)
+          (dsf/notify "Changed Team")
+          (god/battle-manage-squad)
+        )
+      ))
+      (dsf/set-default-action 'select)
+      (dsf/set-no-save 'select)
+
+      (dsf/add-action 'cancel '("Cancel" 'C) (lambda nil
+        (block nil
+          (god/battle-manage-squad)
+        )
+      ))
+      (dsf/set-cancel-action 'cancel)
+      (dsf/set-no-save 'cancel)
+
+      (dsf/set-no-exit)
+      (dsf/set-no-back)
+      (dsf/show-screen)
+    )
+  ))
+
+
+  (setq god/battle-add-object (lambda nil
+    (block nil
+      (dsf/new-screen 'battle-add-object "Add Object" 'custompicker)
+
+      ;; add a propper filter expression
+      ;; we filter on title, and on typFind attributes
+      (dsf/filter-screen (lambda (entries)
+        (block (search term crit)
+          (setq search (fn/split (or (dsf/screen-get 'filter-term) "") "/"))
+          (setq term (item search 0))
+          (setq crit (item search 1))
+          (if (and term (not (eq (count term) 0)))
+            (setq entries (filter entries entry
+              (strFind (fn/get entry 'title) term)
+            ))
+          )
+          (if crit
+            (setq entries (filter entries entry
+              (if crit (find (typFind (cat "*" crit)) (fn/get entry 'unid)))
+            ))
+          )
+          entries
+        )
+      ))
+
+      (enum (typFind "s") unid
+        (if (typGetDataField unid 'name)
+          (dsf/add-list-entry (list
+            (list 'title      (typGetDataField unid 'name))
+            (list 'subtitle   (cat
+              "Level: " (typGetDataField unid 'level)
+              "\nType: ship"
+            ))
+            (list 'unid       unid)
+            (list 'type       "ship")
+            (list 'level      (typGetDataField unid 'level))
+          ))
+        )
       )
-    ))
+
+      (enum (typFind "T -asteroid -star -planet -shipwreck") unid
+        (if (typGetDataField unid 'name)
+          (dsf/add-list-entry (list
+            (list 'title      (typGetDataField unid 'name))
+            (list 'subtitle   (cat
+              "Level: " (typGetDataField unid 'level)
+              "\nType: station"
+            ))
+            (list 'unid       unid)
+            (list 'type       "station")
+            (list 'level      (typGetDataField unid 'level))
+          ))
+        )
+      )
+
+      (dsf/add-list-filter (lambda (entries)
+        (fn/sort entries a b (gr (fn/get a 'level) (fn/get b 'level)))
+      ))
+
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
+        (block (squads squad)
+          (if (eq (dsf/get-pane) 'counter)
+            (block (amount unid type unit squads)
+              (setq amount (dsf/get-counter 1))
+              (setq unid (dsf/get-list-entry 'unid))
+              (setq type (dsf/get-list-entry 'type))
+              (setq unit (list unid amount type))
+
+              (setq squads (god/battle-get-squads))
+              (fn/set squads (list (dsf/session-get 'squad) 'units) unit 'append)
+              (god/battle-set-squads squads)
+
+              (dsf/set-pane 'default)
+              (dsf/notify (cat "Added Unit"))
+              (god/battle-manage-squad)
+            )
+            (block nil
+              (dsf/set-pane 'counter)
+              (dsf/set-default-counter 1)
+              (dsf/set-action-handle 'select '("Set Amount" 'S))
+              (dsf/notify "Choose amount to spawn")
+            )
+          )
+        )
+      ))
+      (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
+      (dsf/set-no-save 'select)
+
+      (dsf/add-action 'cancel '("Cancel" 'C) (lambda nil
+        (block nil
+          (god/battle-manage-squad)
+        )
+      ))
+      (dsf/set-cancel-action 'cancel)
+      (dsf/set-no-save 'cancel)
+
+      (dsf/set-no-back)
+      (dsf/set-no-exit)
+      (dsf/show-screen)
+    )
+  ))
+
+
+  ;;
+  ;; HELPERS
+  ;;
+
+  (setq god/battle-get-squads (lambda nil
+    (block (squads)
+      (setq squads (dsf/session-get "SpaceBattle"))
+      (if (not squads) (setq squads (list)))
+      squads
+    )
+  ))
+  (setq god/battle-set-squads (lambda (squads)
+    (dsf/session-set "SpaceBattle" squads)
+  ))
+
 
     )
   </Globals>
@@ -236,52 +457,34 @@
   <Sovereign UNID="&svGODRed;"
     name="Red Team"
     alignment="neutral"
-    attributes="god"
+    attributes="god, spacebattle"
     >
     <Relationships>
-      <Relationship sovereign="&svGODBlue;"  disposition="enemy" mutual="true" />
-      <Relationship sovereign="&svGODGreen;" disposition="enemy" mutual="true" />
+      <Relationship sovereign="&svGODBlue;" disposition="enemy" mutual="true" />
     </Relationships>
     <StaticData>
-      <GODBattleSovereign>true</GODBattleSovereign>
-      <TeamID>red</TeamID>
-      <Description>...</Description>
+      <Description>
+        "Alignment: Neutral\nMutual enemy of Blue Team"
+      </Description>
     </StaticData>
   </Sovereign>
 
   <Sovereign UNID="&svGODBlue;"
     name="Blue Team"
     alignment="neutral"
-    attributes="god"
+    attributes="god, spacebattle"
     >
     <Relationships>
-      <Relationship sovereign="&svGODRed;"   disposition="enemy" mutual="true" />
-      <Relationship sovereign="&svGODGreen;" disposition="enemy" mutual="true" />
+      <Relationship sovereign="&svGODRed;" disposition="enemy" mutual="true" />
     </Relationships>
     <StaticData>
-      <GODBattleSovereign>true</GODBattleSovereign>
-      <TeamID>blue</TeamID>
-      <Description>...</Description>
+      <Description>
+        "Alignment: Neutral\nMutual enemy of Red Team"
+      </Description>
     </StaticData>
   </Sovereign>
 
-  <Sovereign UNID="&svGODGreen;"
-    name="Green Team"
-    alignment="neutral"
-    attributes="god"
-    >
-    <Relationships>
-      <Relationship sovereign="&svGODRed;"  disposition="enemy" mutual="true" />
-      <Relationship sovereign="&svGODBlue;" disposition="enemy" mutual="true" />
-    </Relationships>
-    <StaticData>
-      <GODBattleSovereign>true</GODBattleSovereign>
-      <TeamID>green</TeamID>
-      <Description>...</Description>
-    </StaticData>
-  </Sovereign>
-
-</TranscendenceExtension>
+</TranscendenceModule>
 <!--
 vim:ts=2:sw=2:sts=2:ft=tscript:
 -->
