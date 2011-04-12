@@ -160,8 +160,9 @@
         )
       ))
       (dsf/set-default-action 'select)
-      ;; disable the action if the list is empty
       (dsf/set-disable-action 'select '(dsf/list-is-empty))
+
+      ;; SPAWN AMOUNT
 
       (dsf/new-screen 'spawn-count "Set Spawn Amount")
       (dsf/set-pane 'counter)
@@ -173,80 +174,86 @@
       (dsf/add-action 'select '("Select" 'S) (lambda nil
         (block nil
           (dsf/session-set 'count (dsf/get-counter 1))
-          (dsf/show-screen 'spawn-behaviour)
+          (dsf/show-screen 'spawn-sovereign)
         )
       ))
       (dsf/set-default-action 'select)
 
+      ;; SPAWN SOVEREIGN
+
+      (dsf/new-screen 'spawn-sovereign "Set Spawn Sovereign" 'custompicker)
+      (dsf/filter-screen)
+      (enum (typFind "v -god") sov
+        (dsf/add-list-entry (list
+          (list 'title      (typGetDataField sov 'name))
+          (list 'sov        sov)
+        ))
+      )
+      (dsf/add-action 'select '("Select" 'S) (lambda nil
+        (block nil
+          (dsf/session-set 'sovereign (dsf/get-list-entry 'sov))
+          (dsf/show-screen 'spawn-behaviour)
+        )
+      ))
+      (dsf/set-default-action 'select)
+      (dsf/set-disable-action 'select '(dsf/list-is-empty))
+
+      ;; SPAWN BEHAVIOUR
+
       (dsf/new-screen 'spawn-behaviour "Set Spawn Behaviour" 'custompicker)
       (dsf/add-list-entries (list
         '((title      "Wingman")
-          (subtitle   "Add as wingman")
+          (subtitle   "Add as your wingman")
           (orders     'wingman)
         )
-        '((title      "Enemy")
-          (subtitle   "Add as enemy, attacking you")
-          (orders     'enemy)
-        )
         '((title      "Wander")
-          (subtitle   "Add as Independent, wandering")
+          (subtitle   "Add as Wandering")
           (orders     'wander)
         )
-        '((title      "Aggressive Wander")
-          (subtitle   "Add as DestructiveChaos, attacking nearest enemies")
-          (orders     'aggressive)
+        '((title      "Attack Nearest Enemy")
+          (subtitle   "Add as attacking nearest enemies")
+          (orders     'attack-nearest)
         )
-        '((title      "Escort")
-          (subtitle   "Add as your escort")
-          (orders     'escort)
+        '((title      "Protect Target")
+          (subtitle   "Protect target. If it is a ship, escort. If it is a station, patrol")
+          (orders     'protect)
+          (hide       (not (objGetTarget gPlayerShip)))
         )
-        '((title      "Patrol")
-          (subtitle   "Patrol around a random friendly target")
-          (orders     'patrol)
-        )
-        '((title      "Passive")
-          (subtitle   "Add as passive (holding)")
-          (orders     'passive)
+        '((title      "Hold")
+          (subtitle   "Add as holding")
+          (orders     'hold)
         )
       ))
       (setq spawn (lambda nil
-        (block (unid amount orders)
+        (block (unid amount sovereign orders)
           (setq unid (dsf/session-delete 'unid))
           (setq amount (dsf/session-delete 'count))
+          (setq sovereign (dsf/session-delete 'sovereign))
           (setq orders (dsf/get-list-entry 'orders))
 
           (for i 1 amount (block (obj)
             ;; we create all short of the players pos
-            (setq obj (sysCreateShip unid (sysVectorPolarOffset gPlayerShip (random 0 359) (random 5 15)) &svIndependent;))
+            (setq obj (sysCreateShip unid (sysVectorPolarOffset gPlayerShip (random 0 359) (random 5 15)) sovereign))
             (switch
               (eq orders 'wingman)
                 (block nil
-                  (objSetSovereign obj &svIndependent;)
                   (objSetEventHandler obj &baStdWingmanBase;)
                   (objFireEvent obj "OrderJoinPlayer")
                 )
-              (eq orders 'enemy)
-                (block nil
-                  (objSetSovereign obj &svPirates;)
-                  (shpOrder obj 'attack gPlayerShip)
-                )
               (eq orders 'wander)
-                (block nil
-                  (shpOrder obj 'wander)
+                (shpOrder obj 'wander)
+              (eq orders 'attack-nearest)
+                (shpOrder obj 'attackNearestEnemy)
+              (eq orders 'protect)
+                (block (target)
+                  (setq target (objGetTarget gPlayerShip))
+                  (if (objIsShip target)
+                    (shpOrder obj 'escort target)
+                    (shpOrder obj 'patrol target (random 60 70))
+                  )
                 )
-              (eq orders 'aggressive)
-                (block nil
-                  (objSetSovereign obj &svDestructiveChaos;)
-                  (shpSetCommandCode obj (block nil
-                    (shpOrder gSource 'attack (sysFindObject gSource "sTAZN"))
-                  ))
-                )
-              (eq orders 'escort)
-                (shpOrder obj 'escort gPlayerShip)
-              (eq orders 'patrol)
-                (shpOrder obj 'patrol (random (sysFindObject gPlayerShip "TAF")) (random 10 40))
-              (eq orders 'passive)
-                  (shpOrder obj 'hold)
+              (eq orders 'hold)
+                (shpOrder obj 'hold)
             )
           ))
         )
@@ -261,6 +268,7 @@
         (dsf/show-screen 'spawn-select)
       )))
 
+      ;; show initial screen
       (dsf/show-screen 'ship-select)
     )
   ))
